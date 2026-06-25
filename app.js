@@ -125,6 +125,9 @@ const INGREDIENTS = {
   synthprotein:{ id:"synthprotein", name:"合成蛋白", base:"synthprotein.fresh", forms:{
       "synthprotein.fresh":{name:"合成蛋白",art:"synthprotein",tag:"fresh"}, "synthprotein.decayed":{name:"衰變蛋白",art:"synthprotein",tag:"spoiled"} },
     transitions:[ {from:"synthprotein.fresh",at:365000,to:"synthprotein.decayed"} ]},
+  /* 段四 #12 終局料理 */
+  genesis:{ id:"genesis", name:"創世湯", base:"genesis_broth", forms:{
+      "genesis_broth":{name:"創世湯",art:"genesis",tag:"mythic"} }, transitions:[] },
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -156,6 +159,8 @@ const RECIPES = [
     inputs:[ {match:{formId:"synthprotein.fresh"}, count:1} ] },
   { id:"synth_dragon", name:"重組龍胚", tool:"recombinator", era:"future", output:"dragon", hidden:true,
     inputs:[ {match:{formId:"synthprotein.fresh"}, count:1}, {match:{formId:"spice.fresh"}, count:1} ] },
+  { id:"genesis", name:"創世湯", tool:"recombinator", era:"future", output:"genesis", hidden:true,
+    inputs:[ {match:{formId:"wine.mythic"}, count:1}, {match:{art:"amber_honey"}, count:1}, {match:{art:"dragon", tag:"mythic"}, count:1} ] },
 ];
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
@@ -179,6 +184,10 @@ const ORDERS = {
 };
 const ENDING_TEXT =
 "永恆三明治成。\n書頁泛起久違的金光，焦痕一寸寸退去——\n但翻過這一頁，其後仍是大片空白。\n\n料理文明的重建，才剛剛開始。\n〔未完待續〕";
+const ENDING_FULL =
+"最後一味落定。\n《永恆食譜》通體生輝，書頁不再有空白。\n你嚐了一口創世湯——\n那是所有時代的滋味，一同在舌尖甦醒。\n\n文明的爐火，重新被點燃了。";
+const ENDING_COLLECTION =
+"每一頁都被你填滿了。\n《永恆食譜》自此完整無缺——\n人類所有時代的料理智慧，重歸於世。\n\n你，是當之無愧的時空廚師。";
 
 /* 形態描述（敘事文案 §4.2） */
 const COPY = {
@@ -205,6 +214,7 @@ const COPY = {
  "giant_egg.fresh":"比人頭還大的蛋。裡頭睡著什麼？","giant_egg.dragon":"溫暖喚醒了牠——破殼而出的巨龍。",
  "spice.fresh":"史前的香料，氣味濃烈得不像這個世界。","spice.fossil":"連香氣都成了化石。",
  "synthprotein.fresh":"近未來的合成蛋白。無味，卻是萬物的基料。","synthprotein.decayed":"連合成物也會在漫長歲月裡崩解。",
+ "genesis_broth":"所有時代的滋味，一同在舌尖甦醒。文明的爐火，重新被點燃。",
 };
 
 /* 歲月之軸節點 */
@@ -431,6 +441,7 @@ function makeRecipe(m){
   maybeDiscover(out.base,true); coolParadox();
   renderInventory(); renderCraft(); renderSelected(); renderTools(); persist();
   if(yieldN>1) toast(`工具精煉——一次做出 ${yieldN} 份！`);
+  if(r.output==="genesis") showEnding(ENDING_FULL,"genesis");   // #12 真結局
 }
 function discardSelected(){
   const it=S.inventory.find(x=>x.uid===selectedUid); if(!it) return;
@@ -452,6 +463,7 @@ function maybeDiscover(formId, celebrate){
   if(!hadExped && S.unlocked.actions.includes("expedition")){ renderExpedition(); toast("時之爐震動了——你已能『遠征』更古老的紀元。〔遠征已解鎖〕"); }
   if(!hadDup && S.unlocked.actions.includes("duplication")){ renderParadox(); renderSelected(); toast("你窺見了時間的裂縫——『複製』已解鎖。但小心悖論。"); }
   for(const e of S.unlocked.eras) if(!eras0.includes(e)){ renderEraNav(); toast("書頁間浮現了新的紀元——「"+ERAS[e].name+"」已可翻閱。"); }
+  if(codex.size===ALL_FORMS.length && !S.flags.fullCodexShown){ S.flags.fullCodexShown=true; persist(); showEnding(ENDING_COLLECTION,"genesis"); }  // #12 圖鑑 100% 結局
   checkOrders(); ftueCheck();
 }
 function ensureUnlocks(){
@@ -572,7 +584,7 @@ function checkOrders(){
   const o=ORDERS[id]; if(!o.goal()) return;
   S.orders.done.push(id); S.orders.active = o.next; o.reward(); gainEnergy(REGEN_ORDER);
   renderEraNav(); renderOrder(); renderPantry(); renderParadox(); persist();
-  if(o.done==="__ENDING__") showEnding(); else toast("「"+o.name+"」— "+o.done);
+  if(o.done==="__ENDING__") showEnding(ENDING_TEXT,"eternal_sandwich"); else toast("「"+o.name+"」— "+o.done);
 }
 
 /* ───────── 發現 / toast / 結局 ───────── */
@@ -585,7 +597,9 @@ function showDiscovery(form){
 discoveryEl.addEventListener("click",()=>discoveryEl.hidden=true);
 let toastTimer=null;
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,3200); }
-function showEnding(){ $("endingText").textContent=ENDING_TEXT; $("ending").hidden=false; }
+function showEnding(text, art){ useArt($("endingArt"), art||"eternal_sandwich");
+  $("endingText").textContent = text + "\n\n— 已補回 "+codex.size+" / "+ALL_FORMS.length+" 頁 —";
+  $("ending").hidden=false; }
 $("endingClose").addEventListener("click",()=>$("ending").hidden=true);
 
 /* ───────── 設定 / 存檔 ───────── */
@@ -643,7 +657,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.10.0";                // 段三：#9 近未來 + 分子重組器 + 合成蛋白
+const APP_VERSION="0.11.0";                // 段四：#12 創世湯 + 完整版結局
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
