@@ -256,7 +256,10 @@
     <h1 class="booktitle">永恆食譜</h1>
     <p class="folio" id="folio">殘頁 · 文明終末</p>
     <span class="version" id="version"></span>
-    <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
+    <div class="topbtns">
+      <button class="iconbtn" id="helpBtn" aria-label="玩法說明">玩法</button>
+      <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
+    </div>
   </header>
 
   <nav class="eras" id="eraNav" hidden></nav>
@@ -358,6 +361,65 @@
     <svg class="ending-art" id="endingArt" viewBox="0 0 100 100"><use href="#art-eternal_sandwich"/></svg>
     <p id="endingText"></p>
     <button id="endingClose">闔上此頁，繼續探索</button>
+  </div>
+</div>
+
+<!-- 玩家說明書 -->
+<div class="manual" id="manual" hidden>
+  <div class="manual-card">
+    <h2>時空廚師手記</h2>
+    <p class="manual-sub">隨時可從上方「玩法」翻閱</p>
+
+    <section><h3>你的目標</h3>
+      <p>文明已逝，只剩一本殘缺的《永恆食譜》。你是時空廚師——穿越各個年代，熟成與調理食材，把食譜一頁頁補回，最終做出傳說中的「創世湯」。</p></section>
+
+    <section><h3>基本操作</h3>
+      <p>・<b>採集</b>：在下方「採集」點食材，放入「調理之頁」。<br>
+      ・<b>選取</b>：點調理之頁上的食材，下方會出現它的資訊與「歲月之軸」。<br>
+      ・<b>熟成</b>：拖動歲月之軸選一段時間，按「熟成」，食材便會老化、變成新的樣子。熟成永遠免費。</p></section>
+
+    <section><h3>時間有兩條軸</h3>
+      <p>・<b>熟成</b>＝讓「選取的那一件食材」變老，年齡只增不減。<br>
+      ・<b>翻頁</b>＝切換你所在的「年代」，決定能用的工具、環境、能採集的食材。</p></section>
+
+    <section><h3>紀元與環境（最重要）</h3>
+      <p>每個紀元有自己的「環境」，許多變化都靠它：<br>
+      ・<b>溫暖</b>（中世紀、侏儸紀、近未來）：麵團才能發酵、蛋才能孵化、龍才能長大。<br>
+      ・<b>乾燥／煙燻</b>（古埃及／石器時代）：肉、魚才能做成乾貨保存，否則會腐壞。<br>
+      所以同樣是「熟成」，在不同紀元結果可能完全不同。卡住時，換個環境再試。</p></section>
+
+    <section><h3>加工配方</h3>
+      <p>把對的食材一起放上調理之頁，若符合某道配方，就會跳出「製作」按鈕；有些還需特定工具或紀元。許多隱藏料理要靠嘗試組合才會發現——看到「？ 似乎可調理」就表示有隱藏配方。</p></section>
+
+    <section><h3>工具</h3>
+      <p>工具綁在紀元上（烤箱在工業時代、陶窯在古埃及…）。工具越用越順手：嶄新 → 順手 → 古董（一次能多做幾份）→ 鏽蝕（加成消失，可「保養」復原）。</p></section>
+
+    <section><h3>圖鑑</h3>
+      <p>每發現一種食材形態或料理，就收錄進圖鑑。未發現的格子會給朦朧線索，指引你方向。</p></section>
+
+    <section><h3>遠征（進階）</h3>
+      <p>發現稀有食材後解鎖。可「遠征」回到更古老的年代（如侏儸紀），限量採集絕種食材（如龍）。</p></section>
+
+    <section><h3>複製與時空悖論</h3>
+      <p>發現神話級食材後解鎖「複製」：能複製出一份一模一樣的食材，用來增產珍稀之物（例如把難得的龍變多份）。<br>
+      但每次複製會累積「<b>時空悖論</b>」：<br>
+      ・悖論越高，畫面會開始扭曲。<br>
+      ・悖論過高時再複製，會吐出沒用的「時間殘影」。<br>
+      ・正常遊玩（熟成等）會讓悖論自然下降；也可按「穩定時間線」一次清除。</p></section>
+
+    <section><h3>時光能量</h3>
+      <p>解鎖遠征／複製後出現，是它們的燃料：<br>
+      ・<b>消耗</b>：遠征、複製、穩定時間線。<br>
+      ・<b>回復</b>：熟成、發現新事物、完成委託。<br>
+      熟成永遠不耗能，所以你永遠不會卡死——能量見底就多熟成、多探索。</p></section>
+
+    <section><h3>委託與結局</h3>
+      <p>《永恆食譜》的殘頁會給你委託，指引方向並給予獎勵。集齊條件做出「創世湯」，或補滿整本圖鑑，將迎來結局。</p></section>
+
+    <section><h3>存檔</h3>
+      <p>進度自動保存在這台裝置。到「設定（藏書閣）」可「謄抄副本」匯出備份、「拓印還原」匯入。iPhone 用 Safari「加入主畫面」可離線玩、存檔更穩固。</p></section>
+
+    <button class="closebtn" id="closeManual">闔上手記</button>
   </div>
 </div>
 

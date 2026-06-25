@@ -653,6 +653,8 @@ $("endingClose").addEventListener("click",()=>$("ending").hidden=true);
 /* ───────── 設定 / 存檔 ───────── */
 $("menuBtn").addEventListener("click",()=>{ $("vol").value=vol(); $("menu").hidden=false; });
 $("closeMenu").addEventListener("click",()=>$("menu").hidden=true);
+$("helpBtn").addEventListener("click",()=>$("manual").hidden=false);
+$("closeManual").addEventListener("click",()=>$("manual").hidden=true);
 $("vol").addEventListener("input",e=>{ S.settings.volume=+e.target.value; persist(); });
 $("exportBtn").addEventListener("click",()=>{ const data=JSON.stringify(S);
   navigator.clipboard?.writeText(data).catch(()=>{}); const blob=new Blob([data],{type:"application/json"});
@@ -705,7 +707,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.13.0";                // #16 字體自託管 + 子集化
+const APP_VERSION="0.14.0";                // U0 玩家說明書（可叫出）
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
