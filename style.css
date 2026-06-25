@@ -38,6 +38,14 @@ h1,h2,h3{ margin:0; font-weight:600; }
 .exped-dest{ flex:1; min-width:130px; padding:14px; border:1.5px dashed var(--gold); border-radius:8px; background:rgba(184,136,31,.08); text-align:center; color:var(--ink); }
 .exped-dest strong{ display:block; font-size:16px; margin-bottom:2px; } .exped-dest span{ font-size:12px; color:var(--ink-faded); }
 
+/* 器具（#5）*/
+.tool-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.tool-chip{ display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--ink-faded); border-radius:8px; background:rgba(255,255,255,.10); }
+.tool-chip strong{ font-size:14px; } .tool-chip span{ font-size:12px; color:var(--ink-faded); }
+.tool-chip[data-wear="antique"]{ border-color:var(--gold); } .tool-chip[data-wear="antique"] span{ color:var(--gold); }
+.tool-chip[data-wear="rust"]{ border-color:var(--verdigris); border-style:dashed; } .tool-chip[data-wear="rust"] span{ color:var(--verdigris); }
+.tool-chip button{ background:var(--ink); color:var(--parchment); border:none; border-radius:5px; padding:4px 10px; font-size:12px; }
+
 /* 悖論 */
 .paradox{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 14px; position:relative; z-index:6;
   font-size:13px; color:var(--ink); letter-spacing:.08em; border-bottom:1px dashed var(--ink-faded);

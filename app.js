@@ -24,6 +24,8 @@ const PARADOX_MAX = 120;
 const ENERGY_MAX = 12;
 const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定 的耗能
 const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
+const LAY_COOLDOWN = 3;                              // #4 母雞產蛋冷卻（以動作計）
+const TOOL_NAMES = { oven:"烤箱", barrel:"木桶" };   // #5 工具顯示名
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -193,12 +195,12 @@ function daysToSlider(d){ return d<=0?0:Math.round(SLIDER_MAX*Math.log10(d+1)/Ma
 function formatAge(d){ if(d<=0)return"此刻"; if(d<30)return d+" 天"; if(d<365)return Math.round(d/30)+" 個月"; if(d<36500)return Math.round(d/365)+" 年"; return Math.round(d/365).toLocaleString()+" 年"; }
 
 /* ───────── 存檔 ───────── */
-const SAVE_KEY="chrono.save", SAVE_VERSION=6;
+const SAVE_KEY="chrono.save", SAVE_VERSION=7;
 function defaultSave(){
   return { saveVersion:SAVE_VERSION, kitchenEra:"apocalypse",
     inventory:[{ uid:"i1", id:"milk", formId:"milk.fresh", ageDays:0, bornEra:"apocalypse" }],
     nextUid:2, codex:[], orders:{ active:"o_milk", done:[] },
-    unlocked:{ actions:[], eras:["apocalypse"] }, expedition:null, paradox:0, energy:ENERGY_MAX, settings:{ volume:0.8 },
+    unlocked:{ actions:[], eras:["apocalypse"] }, expedition:null, paradox:0, energy:ENERGY_MAX, tools:{}, settings:{ volume:0.8 },
     flags:{ ftueDone:false, ftueStep:0 }, stats:{ agings:0, discoveries:0, paradoxPeak:0 } };
 }
 function loadSave(){
@@ -207,6 +209,7 @@ function loadSave(){
     // 既有存檔向前遷移：已在玩的人跳過 FTUE
     if((s.saveVersion??0) < SAVE_VERSION) s = { ...defaultSave(), ...s, saveVersion:SAVE_VERSION, flags:{ ftueDone:true, ftueStep:0 } };
     if(!s.flags) s.flags = { ftueDone:true, ftueStep:0 };
+    if(!s.tools) s.tools = {};
     return s;
   }catch(e){ return defaultSave(); }
 }
@@ -296,6 +299,9 @@ function renderSelected(){
   $("ageBtn").disabled = target<=it.ageDays;
   $("dupBtn").hidden = !S.unlocked.actions.includes("duplication");
   if(!$("dupBtn").hidden) $("dupBtn").textContent = "複製（耗能"+COST_DUP+"）";
+  const isHen = it.formId==="hen.fresh";
+  $("layBtn").hidden = !isHen;
+  if(isHen){ const rest=(it.layRest||0)>0; $("layBtn").disabled=rest; $("layBtn").textContent= rest?"母雞休息中…":"產蛋"; }
 }
 function renderPantry(){
   const row=$("pantryRow"); row.innerHTML="";
@@ -319,7 +325,7 @@ function renderCodex(){
   $("codexCount").textContent=codex.size; $("codexTotal").textContent=ALL_FORMS.length;
 }
 function renderTicks(){ const t=$("axisTicks"); t.innerHTML=""; for(const n of NODES){ const s=document.createElement("span"); s.textContent=n.label; t.appendChild(s);} }
-function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderParadox(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderCodex(); }
+function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderParadox(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderTools(); renderCodex(); }
 
 /* ───────── 動作 ───────── */
 function collect(id){
@@ -328,7 +334,7 @@ function collect(id){
   sfxClick();
   const ing=INGREDIENTS[id]; const it={ uid:newUid(), id, formId:ing.base, ageDays:0, bornEra:S.kitchenEra };
   S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
-  maybeDiscover(ing.base,false); coolParadox(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
+  maybeDiscover(ing.base,false); tickLife(); coolParadox(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
 }
 function selectItem(uid){ selectedUid=uid; const it=S.inventory.find(x=>x.uid===uid); $("axis").value=daysToSlider(it?it.ageDays:0); sfxClick(); renderInventory(); renderSelected(); ftueCheck(); }
 function onAxisInput(){
@@ -346,17 +352,24 @@ function doAge(){
   sfxFlow(target-it.ageDays>3650);
   it.ageDays=target; it.formId=resolveForm(it, S.kitchenEra); S.stats.agings++;
   const main=$("pageMain"); main.classList.remove("flash"); void main.offsetWidth;
-  maybeDiscover(it.formId,true); gainEnergy(REGEN_AGE); coolParadox();
+  maybeDiscover(it.formId,true); gainEnergy(REGEN_AGE); tickLife(); coolParadox();
   renderInventory(); renderCraft(); renderSelected(); persist();
 }
 function makeRecipe(m){
   const r=m.recipe;
   S.inventory = S.inventory.filter(it=> !m.consume.includes(it.uid));
-  const out=INGREDIENTS[r.output]; const it={ uid:newUid(), id:r.output, formId:out.base, ageDays:0, bornEra:S.kitchenEra };
-  S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
-  sfxMake();
+  const out=INGREDIENTS[r.output];
+  let yieldN=1;
+  if(r.tool){ yieldN = wearStage(toolWear(r.tool)).yield; S.tools[r.tool] = toolWear(r.tool) + 1; }  // #5 工具磨損
+  let last=null;
+  for(let k=0;k<yieldN && S.inventory.length<20;k++){
+    last={ uid:newUid(), id:r.output, formId:out.base, ageDays:0, bornEra:S.kitchenEra }; S.inventory.push(last);
+  }
+  if(last) selectedUid=last.uid; $("axis").value=0;
+  sfxMake(); tickLife();
   maybeDiscover(out.base,true); coolParadox();
-  renderInventory(); renderCraft(); renderSelected(); persist();
+  renderInventory(); renderCraft(); renderSelected(); renderTools(); persist();
+  if(yieldN>1) toast(`工具精煉——一次做出 ${yieldN} 份！`);
 }
 function discardSelected(){
   const it=S.inventory.find(x=>x.uid===selectedUid); if(!it) return;
@@ -424,6 +437,40 @@ function renderParadox(){   // 狀態列：時光能量 + 時空悖論
   const stab = pShow && S.paradox>0;
   $("stabilizeBtn").hidden = !stab;
   if(stab) $("stabilizeBtn").textContent = "穩定時間線（耗能"+COST_STAB+"）";
+}
+
+/* ───────── #5 工具老化 ───────── */
+function toolWear(tid){ return (S.tools && S.tools[tid]) || 0; }
+function wearStage(uses){
+  if(uses>=24) return { key:"rust",    name:"鏽蝕", yield:1 };
+  if(uses>=12) return { key:"antique", name:"古董", yield:3 };
+  if(uses>=4)  return { key:"old",     name:"順手", yield:2 };
+  return            { key:"new",     name:"嶄新", yield:1 };
+}
+function maintainTool(tid){ S.tools[tid]=0; sfxSoft(); renderTools(); renderCraft(); persist(); toast("工具已保養如新。"); }
+function renderTools(){
+  const sect=$("toolSection"), row=$("toolRow");
+  const tools = curEra().tools || [];
+  if(!tools.length || S.expedition){ sect.hidden=true; return; }
+  sect.hidden=false; row.innerHTML="";
+  for(const tid of tools){
+    const st=wearStage(toolWear(tid));
+    const chip=document.createElement("div"); chip.className="tool-chip"; chip.dataset.wear=st.key;
+    chip.innerHTML=`<strong>${TOOL_NAMES[tid]||tid}</strong><span>${st.name}${st.yield>1?` · 精煉 ×${st.yield}`:(st.key==="rust"?" · 加成已失":"")}</span>`;
+    if(st.key==="rust"){ const b=document.createElement("button"); b.textContent="保養"; b.onclick=()=>maintainTool(tid); chip.appendChild(b); }
+    row.appendChild(chip);
+  }
+}
+
+/* ───────── #4 生命循環（母雞產蛋）───────── */
+function tickLife(){ for(const it of S.inventory) if(it.layRest>0) it.layRest--; }
+function layEgg(){
+  const it=S.inventory.find(x=>x.uid===selectedUid); if(!it||it.formId!=="hen.fresh") return;
+  if((it.layRest||0)>0){ toast("母雞正在休息……"); return; }
+  if(S.inventory.length>=20){ toast("調理之頁已滿，先丟棄一些吧。"); return; }
+  const egg={ uid:newUid(), id:"egg", formId:"egg.fresh", ageDays:0, bornEra:S.kitchenEra };
+  S.inventory.push(egg); it.layRest=LAY_COOLDOWN; sfxClick(); toast("咯咯——母雞下了一顆蛋。");
+  renderInventory(); renderSelected(); persist();
 }
 /* ───────── 遠征（#1）───────── */
 function startExpedition(dest){
@@ -530,7 +577,8 @@ $("discardBtn").addEventListener("click",discardSelected);
 $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
-const APP_VERSION="0.6.0";                 // #3 時光能量（每完成一個編號功能就 +1）
+$("layBtn").addEventListener("click",layEgg);
+const APP_VERSION="0.7.0";                 // #4 生命循環 + #5 工具老化
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
