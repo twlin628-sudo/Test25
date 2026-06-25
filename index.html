@@ -258,6 +258,7 @@
     <span class="version" id="version"></span>
     <div class="topbtns">
       <button class="iconbtn" id="helpBtn" aria-label="玩法說明">玩法</button>
+      <button class="iconbtn" id="cookbookBtn" aria-label="食譜">食譜</button>
       <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
     </div>
   </header>
@@ -327,6 +328,7 @@
 
     <section class="codex">
       <h2 class="sect-title">圖鑑 — 已補回 <span id="codexCount">0</span> / <span id="codexTotal">0</span> 頁</h2>
+      <p class="unlock-hint" id="unlockHint" hidden></p>
       <div class="codex-grid" id="codexGrid"></div>
     </section>
 
@@ -421,6 +423,16 @@
       <p>進度自動保存在這台裝置。到「設定（藏書閣）」可「謄抄副本」匯出備份、「拓印還原」匯入。iPhone 用 Safari「加入主畫面」可離線玩、存檔更穩固。</p></section>
 
     <button class="closebtn" id="closeManual">闔上手記</button>
+  </div>
+</div>
+
+<!-- 食譜書 -->
+<div class="manual" id="cookbook" hidden>
+  <div class="manual-card">
+    <h2>食譜</h2>
+    <p class="manual-sub">已發現的調理之法</p>
+    <div id="cookbookBody"></div>
+    <button class="closebtn" id="closeCookbook">闔上</button>
   </div>
 </div>
 

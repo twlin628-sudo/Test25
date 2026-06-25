@@ -60,6 +60,8 @@ h1,h2,h3{ margin:0; font-weight:600; }
 .paradox button{ background:var(--ink); color:var(--parchment); border:none; border-radius:6px; padding:5px 12px; font-size:12px; }
 .paradox .status-energy{ color:var(--gold); font-weight:600; }
 .paradox .paradox-label{ color:var(--vermilion); }
+.paradox .status-energy, .paradox .paradox-label{ cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
+.unlock-hint{ font-size:12px; color:var(--gold); margin:0 0 8px; }
 .paradox-fx{ position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0; transition:opacity .6s ease;
   background:radial-gradient(120% 100% at 50% 50%, transparent 38%, rgba(150,40,110,.45)); }
 .paradox-fx[data-lvl="lvl1"]{ opacity:.45; animation:paradoxPulse 3s ease-in-out infinite; }

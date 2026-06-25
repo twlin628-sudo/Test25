@@ -220,11 +220,16 @@ const ORDERS = {
     hint:"目標：到中世紀用木桶釀酒，再讓它陳年。",
     done:"酒香穿越了時間。某位釀酒師，會欣慰的。",
     goal:()=> codex.has("wine.aged"), reward:()=>{} },
-  o_pharaoh:{ id:"o_pharaoh", name:"法老的盛宴", next:null,
+  o_pharaoh:{ id:"o_pharaoh", name:"法老的盛宴", next:"o_genesis",
     desc:"昔有王者，欲嚐『永恆』之味。麵餅、陳酪、與千歲之蜜，三者相疊——據說嚐過的人，便不再畏懼時間。",
     hint:"目標：湊齊 麵包 + 陳年起司 + 古代蜂蜜，調理成一物。",
     done:"__ENDING__",
     goal:()=> codex.has("eternal_sandwich"), reward:()=>{} },
+  o_genesis:{ id:"o_genesis", name:"時間的盡頭", next:null,
+    desc:"殘頁最末，只有一行字：集齊跨越時代的極品——三千年的酒、千年的蜜、與一頭巨龍，於近未來的分子重組器中，可煉出傳說的『創世湯』。",
+    hint:"目標：在近未來用分子重組器，做出創世湯（神話酒＋琥珀蜜＋巨龍）。",
+    done:"時間的盡頭，已在你舌尖展開。",
+    goal:()=> codex.has("genesis_broth"), reward:()=>{} },
 };
 const ENDING_TEXT =
 "永恆三明治成。\n書頁泛起久違的金光，焦痕一寸寸退去——\n但翻過這一頁，其後仍是大片空白。\n\n料理文明的重建，才剛剛開始。\n〔未完待續〕";
@@ -482,6 +487,41 @@ function renderCodex(){
     else{ cell.className="codex-cell locked"; cell.innerHTML=`<div class="q">？</div><small>${clueFor(f)}</small>`; }
     grid.appendChild(cell); }
   $("codexCount").textContent=codex.size; $("codexTotal").textContent=ALL_FORMS.length;
+  const uh=nextUnlockHint(); $("unlockHint").textContent=uh; $("unlockHint").hidden=!uh;   // U6
+}
+// U6：下一個紀元解鎖提示
+function nextUnlockHint(){
+  const total=ALL_FORMS.length; let best=null;
+  for(const [eid,th] of Object.entries(ERA_UNLOCK)){
+    if(S.unlocked.eras.includes(eid)) continue;
+    if(best===null || th<best.th) best={eid,th};
+  }
+  if(!best) return "";
+  const need=Math.max(1, Math.ceil(best.th*total)-codex.size);
+  return `再發現 ${need} 種，可解鎖【${ERAS[best.eid].name}】`;
+}
+// U3：配方材料的可讀標籤
+function matchLabel(m){
+  if(m.formId) return (FORMS[m.formId]||{}).name||m.formId;
+  const TN={rare:"陳年級",mythic:"神話級"}, AN={bread:"麵包",cheese:"起司",dragon:"龍",amber_honey:"琥珀蜜"};
+  let s=(m.tag&&TN[m.tag]?TN[m.tag]:"")+(AN[m.art]||m.art);
+  if(m.notTag) s="任一"+s;
+  return s;
+}
+// U3：食譜書
+function renderCookbook(){
+  const body=$("cookbookBody"); body.innerHTML=""; let hiddenLeft=0;
+  for(const r of RECIPES){
+    const out=INGREDIENTS[r.output]; const known=discovered(out.base);
+    if(!known){ hiddenLeft++; continue; }
+    const mat=r.inputs.map(i=> matchLabel(i.match)+(i.count>1?` ×${i.count}`:"")).join("、");
+    const req=[]; if(r.tool) req.push(TOOL_NAMES[r.tool]||r.tool); if(r.era) req.push(ERAS[r.era].name);
+    const sec=document.createElement("section");
+    sec.innerHTML=`<h3>${FORMS[out.base].name}</h3><p>材料：${mat}${req.length?`<br>需要：${req.join("·")}`:""}</p>`;
+    body.appendChild(sec);
+  }
+  if(!body.children.length){ const p=document.createElement("p"); p.className="manual-sub"; p.textContent="尚未發現任何食譜——多嘗試組合吧。"; body.appendChild(p); }
+  if(hiddenLeft){ const p=document.createElement("p"); p.className="credits-thanks"; p.textContent=`尚有 ${hiddenLeft} 道未發現的食譜……`; body.appendChild(p); }
 }
 function renderTicks(){ const t=$("axisTicks"); t.innerHTML=""; for(const n of NODES){ const s=document.createElement("span"); s.textContent=n.label; t.appendChild(s);} }
 function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderParadox(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderTools(); renderCodex(); }
@@ -493,7 +533,8 @@ function collect(id){
   sfxClick();
   const ing=INGREDIENTS[id]; const it={ uid:newUid(), id, formId:ing.base, ageDays:0, bornEra:S.kitchenEra };
   S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
-  maybeDiscover(ing.base,false); tickLife(); coolParadox(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
+  if(!S.flags.ftueDone) S.flags.ftueDidCollect=true;   // U5 引導用
+  maybeDiscover(ing.base,false); tickLife(); coolParadox(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); ftueCheck(); persist();
 }
 function selectItem(uid){ selectedUid=uid; const it=S.inventory.find(x=>x.uid===uid); $("axis").value=daysToSlider(it?it.ageDays:0); sfxClick(); renderInventory(); renderSelected(); ftueCheck(); }
 function onAxisInput(){
@@ -697,6 +738,11 @@ $("helpBtn").addEventListener("click",()=>$("manual").hidden=false);
 $("closeManual").addEventListener("click",()=>$("manual").hidden=true);
 $("creditsBtn").addEventListener("click",()=>{ $("menu").hidden=true; $("credits").hidden=false; });
 $("closeCredits").addEventListener("click",()=>$("credits").hidden=true);
+$("cookbookBtn").addEventListener("click",()=>{ renderCookbook(); $("cookbook").hidden=false; });
+$("closeCookbook").addEventListener("click",()=>$("cookbook").hidden=true);
+// U7：點狀態列即時說明
+$("energyText").addEventListener("click",()=>toast("時光能量：遠征／複製／穩定時間線會消耗；熟成、發現、完成委託會回復。熟成永不耗能。"));
+$("paradoxText").addEventListener("click",()=>toast("時空悖論：複製會累積；過高會扭曲畫面、複製出殘影。正常遊玩會冷卻，或按『穩定時間線』清除。"));
 $("vol").addEventListener("input",e=>{ S.settings.volume=+e.target.value; persist(); });
 $("exportBtn").addEventListener("click",()=>{ const data=JSON.stringify(S);
   navigator.clipboard?.writeText(data).catch(()=>{}); const blob=new Blob([data],{type:"application/json"});
@@ -713,6 +759,7 @@ const FTUE_STEPS=[
   { target:"axis",    caption:"拖動下方的『歲月之軸』往右——讓牛奶經歷約一個月。", done:()=> ftueTargetDays()>=30 },
   { target:"ageBtn",  caption:"按下『熟成』，讓歲月真正流過。", done:()=> [...codex].some(f=> f.startsWith("cheese")) },
   { target:"eraNav",  caption:"你補回了第一頁！上方出現了書籤——翻頁，去別的紀元探索吧。", done:()=> S.kitchenEra!=="apocalypse" },
+  { target:"pantryRow", caption:"留意頁籤上的『環境』（如 中世紀·溫暖），它決定食材會變成什麼。先在這裡採集一樣食材吧。", done:()=> !!S.flags.ftueDidCollect },
 ];
 function ftueActive(){ return !S.flags.ftueDone; }
 function ftueTargetDays(){ const it=S.inventory.find(x=>x.uid===selectedUid); if(!it) return 0;
@@ -738,7 +785,8 @@ function ftueCheck(){
   if(S.flags.ftueStep>=FTUE_STEPS.length){ ftueFinish(); return; }
   ftueRender();
 }
-function ftueFinish(){ S.flags.ftueDone=true; persist(); document.querySelectorAll(".ftue-ring").forEach(e=>e.classList.remove("ftue-ring")); $("ftueCaption").hidden=true; }
+function ftueFinish(){ S.flags.ftueDone=true; persist(); document.querySelectorAll(".ftue-ring").forEach(e=>e.classList.remove("ftue-ring")); $("ftueCaption").hidden=true;
+  toast("提示：把食材放上『調理之頁』可組合出料理；右上『玩法／食譜』隨時可查。"); }
 $("ftueSkip").addEventListener("click", ftueFinish);
 
 /* ───────── 綁定 + 啟動 ───────── */
@@ -749,7 +797,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.15.0";                // U1 環境揭露 + U4 滑桿短窗 + U2 條件提示 + 版權頁
+const APP_VERSION="0.16.0";                // U3 食譜書 + U5 FTUE擴充 + U6 方向感 + U7 狀態列說明
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
