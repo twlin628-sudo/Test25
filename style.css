@@ -36,6 +36,7 @@ h1,h2,h3{ margin:0; font-weight:600; }
 .booktitle::before,.booktitle::after{ content:"❧"; color:var(--vermilion); opacity:.6; margin:0 .4em; font-size:16px; vertical-align:middle; }
 .folio{ margin:3px 0 0; font-size:13px; color:var(--ink-faded); letter-spacing:.08em; }
 .iconbtn{ position:absolute; right:10px; top:14px; background:none; border:1px solid var(--ink-faded); border-radius:4px; font-size:12px; padding:4px 8px; color:var(--ink-faded); }
+.version{ position:absolute; left:10px; top:18px; font-size:11px; color:var(--ink-faded); letter-spacing:.05em; opacity:.8; }
 
 /* 紀元頁籤 */
 .eras{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; padding:10px 12px; position:relative; z-index:6;

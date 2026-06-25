@@ -411,6 +411,8 @@ $("ftueSkip").addEventListener("click", ftueFinish);
 $("axis").addEventListener("input",onAxisInput);
 $("ageBtn").addEventListener("click",doAge);
 $("discardBtn").addEventListener("click",discardSelected);
+const APP_VERSION="0.3.0";                 // 介面版號（每完成一個編號功能就 +1）
+$("version").textContent="v"+APP_VERSION;
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
 renderTicks(); renderAll(); ftueCheck();
 
