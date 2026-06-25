@@ -6,9 +6,9 @@
 
 /* ───────── 紀元 ───────── */
 const ERAS = {
-  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:[],                          rares:[] },
+  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:["radmushroom"],             rares:[] },
   industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg","meat"],rares:[] },
-  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],           rares:[] },
+  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey","herb"],    rares:[] },
   egypt:     { id:"egypt",      name:"古埃及",   envTags:["dry"],   tools:["kiln"],  commons:["wheat","nilefish"],        rares:[] },
   stone:     { id:"stone",      name:"石器時代", envTags:["smoke"], tools:["smoker"],commons:["meat","berry","wildhoney"],rares:[] },
   future:    { id:"future",     name:"近未來",   envTags:["freeze","warm"], tools:["recombinator"], commons:["synthprotein"], rares:[] },
@@ -128,6 +128,24 @@ const INGREDIENTS = {
   /* 段四 #12 終局料理 */
   genesis:{ id:"genesis", name:"創世湯", base:"genesis_broth", forms:{
       "genesis_broth":{name:"創世湯",art:"genesis",tag:"mythic"} }, transitions:[] },
+  /* #11 收尾 */
+  radmushroom:{ id:"radmushroom", name:"輻射菇", base:"radmushroom.fresh", forms:{
+      "radmushroom.fresh":{name:"輻射菇",art:"mushroom",tag:"fresh"}, "radmushroom.mutant":{name:"變異菇",art:"mushroom",tag:"rare"} },
+    transitions:[ {from:"radmushroom.fresh",at:365,to:"radmushroom.mutant"} ]},
+  herb:{ id:"herb", name:"香草", base:"herb.fresh", forms:{
+      "herb.fresh":{name:"香草",art:"herb",tag:"fresh"}, "herb.dried":{name:"乾香草",art:"herb",tag:"normal"} },
+    transitions:[ {from:"herb.fresh",at:30,to:"herb.dried"} ]},
+  /* #13 豪華版隱藏料理（皆為調理產物，單一形態）*/
+  honeybread:{ id:"honeybread", name:"蜜麵包", base:"honeybread", forms:{ "honeybread":{name:"蜜麵包",art:"honeybread",tag:"normal"} }, transitions:[] },
+  bakedfish:{ id:"bakedfish", name:"起司焗魚", base:"bakedfish", forms:{ "bakedfish":{name:"起司焗魚",art:"bakedfish",tag:"normal"} }, transitions:[] },
+  spicedmeat:{ id:"spicedmeat", name:"香料臘肉", base:"spicedmeat", forms:{ "spicedmeat":{name:"香料臘肉",art:"spicedmeat",tag:"normal"} }, transitions:[] },
+  cake:{ id:"cake", name:"古法蛋糕", base:"cake", forms:{ "cake":{name:"古法蛋糕",art:"cake",tag:"rare"} }, transitions:[] },
+  winedragon:{ id:"winedragon", name:"紅酒燉龍", base:"winedragon", forms:{ "winedragon":{name:"紅酒燉龍",art:"winedragon",tag:"rare"} }, transitions:[] },
+  pharaohplatter:{ id:"pharaohplatter", name:"法老盛宴拼盤", base:"pharaohplatter", forms:{ "pharaohplatter":{name:"法老盛宴拼盤",art:"pharaohplatter",tag:"rare"} }, transitions:[] },
+  eggnog:{ id:"eggnog", name:"時光蛋酒", base:"eggnog", forms:{ "eggnog":{name:"時光蛋酒",art:"eggnog",tag:"normal"} }, transitions:[] },
+  berrycheese:{ id:"berrycheese", name:"野莓乳酪", base:"berrycheese", forms:{ "berrycheese":{name:"野莓乳酪",art:"berrycheese",tag:"normal"} }, transitions:[] },
+  mushstew:{ id:"mushstew", name:"末日燉菇", base:"mushstew", forms:{ "mushstew":{name:"末日燉菇",art:"mushstew",tag:"normal"} }, transitions:[] },
+  herbchicken:{ id:"herbchicken", name:"香草烤雞", base:"herbchicken", forms:{ "herbchicken":{name:"香草烤雞",art:"herbchicken",tag:"rare"} }, transitions:[] },
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -161,7 +179,31 @@ const RECIPES = [
     inputs:[ {match:{formId:"synthprotein.fresh"}, count:1}, {match:{formId:"spice.fresh"}, count:1} ] },
   { id:"genesis", name:"創世湯", tool:"recombinator", era:"future", output:"genesis", hidden:true,
     inputs:[ {match:{formId:"wine.mythic"}, count:1}, {match:{art:"amber_honey"}, count:1}, {match:{art:"dragon", tag:"mythic"}, count:1} ] },
+  /* #13 豪華版：10 道隱藏料理（皆 tool/era 無限制，純組合發現）*/
+  { id:"r_honeybread", name:"蜜麵包", output:"honeybread", hidden:true, inputs:[ {match:{art:"bread",notTag:"fossil"},count:1}, {match:{formId:"honey.fresh"},count:1} ] },
+  { id:"r_bakedfish", name:"起司焗魚", output:"bakedfish", hidden:true, inputs:[ {match:{formId:"nilefish.dried"},count:1}, {match:{formId:"cheese.fresh"},count:1} ] },
+  { id:"r_spicedmeat", name:"香料臘肉", output:"spicedmeat", hidden:true, inputs:[ {match:{formId:"meat.dried"},count:1}, {match:{formId:"herb.dried"},count:1} ] },
+  { id:"r_cake", name:"古法蛋糕", output:"cake", hidden:true, inputs:[ {match:{formId:"egg.fresh"},count:1}, {match:{formId:"wheat.fresh"},count:1}, {match:{formId:"honey.fresh"},count:1} ] },
+  { id:"r_winedragon", name:"紅酒燉龍", output:"winedragon", hidden:true, inputs:[ {match:{formId:"wine.aged"},count:1}, {match:{art:"dragon",tag:"mythic"},count:1} ] },
+  { id:"r_pharaoh", name:"法老盛宴拼盤", output:"pharaohplatter", hidden:true, inputs:[ {match:{formId:"nilefish.aged"},count:1}, {match:{art:"bread",notTag:"fossil"},count:1}, {match:{formId:"honey.ancient"},count:1} ] },
+  { id:"r_eggnog", name:"時光蛋酒", output:"eggnog", hidden:true, inputs:[ {match:{formId:"egg.fresh"},count:1}, {match:{formId:"wine.fresh"},count:1} ] },
+  { id:"r_berrycheese", name:"野莓乳酪", output:"berrycheese", hidden:true, inputs:[ {match:{formId:"candy"},count:1}, {match:{formId:"cheese.fresh"},count:1} ] },
+  { id:"r_mushstew", name:"末日燉菇", output:"mushstew", hidden:true, inputs:[ {match:{formId:"radmushroom.fresh"},count:1}, {match:{formId:"meat.fresh"},count:1} ] },
+  { id:"r_herbchicken", name:"香草烤雞", output:"herbchicken", hidden:true, inputs:[ {match:{formId:"hen.fresh"},count:1}, {match:{formId:"herb.fresh"},count:1} ] },
 ];
+
+/* #14 圖鑑朦朧線索（程序化，依食材來源生成） */
+const COLLECTIBLE = new Set();
+for(const e of Object.values(ERAS)){ (e.commons||[]).forEach(i=>COLLECTIBLE.add(i)); (e.rares||[]).forEach(i=>COLLECTIBLE.add(i)); }
+const RECIPE_OUTPUTS = new Set(RECIPES.map(r=>r.output));
+const HIDDEN_OUTPUTS = new Set(RECIPES.filter(r=>r.hidden).map(r=>r.output));
+function clueFor(f){
+  const ing=f.ingredient;
+  if(COLLECTIBLE.has(ing)) return "與『"+INGREDIENTS[ing].name+"』有關的形態";
+  if(HIDDEN_OUTPUTS.has(ing)) return "某種失傳的組合……";
+  if(RECIPE_OUTPUTS.has(ing)) return "需要動手烹調之物";
+  return "？？？";
+}
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
 const ORDERS = {
@@ -215,6 +257,12 @@ const COPY = {
  "spice.fresh":"史前的香料，氣味濃烈得不像這個世界。","spice.fossil":"連香氣都成了化石。",
  "synthprotein.fresh":"近未來的合成蛋白。無味，卻是萬物的基料。","synthprotein.decayed":"連合成物也會在漫長歲月裡崩解。",
  "genesis_broth":"所有時代的滋味，一同在舌尖甦醒。文明的爐火，重新被點燃。",
+ "radmushroom.fresh":"廢土上唯一還肯生長的東西。微微發光。","radmushroom.mutant":"吸飽了輻射，變得巨大而詭異。",
+ "herb.fresh":"中世紀庭院裡的香草，氣味清新。","herb.dried":"晾乾的香草，香氣更聚。",
+ "honeybread":"麵包淋上蜂蜜，最簡單的幸福。","bakedfish":"魚乾鋪上融化的起司，焗得金黃。","spicedmeat":"乾肉裹上香料，風味深邃。",
+ "cake":"蛋、麥、蜜的結晶——古法蛋糕。","winedragon":"以陳年酒慢燉巨龍，王者級的主菜。","pharaohplatter":"鹹魚、麵餅、千歲蜜——獻給法老的拼盤。",
+ "eggnog":"蛋與酒的交融，暖入心脾的蛋酒。","berrycheese":"蜜餞野果配上乳酪，酸甜平衡。","mushstew":"輻射菇與肉同燉——末日裡難得的一鍋暖。",
+ "herbchicken":"香草烤雞，金黃酥脆，香氣四溢。",
 };
 
 /* 歲月之軸節點 */
@@ -391,7 +439,7 @@ function renderCodex(){
   for(const f of ALL_FORMS){ const cell=document.createElement("div");
     if(discovered(f.formId)){ cell.className="codex-cell"; cell.dataset.tag=f.tag;
       cell.innerHTML=`<svg class="artwork" viewBox="0 0 100 100"><use href="#art-${f.art}"/></svg><small>${f.name}</small>`; }
-    else{ cell.className="codex-cell locked"; cell.innerHTML=`<div class="q">？</div><small>未發現</small>`; }
+    else{ cell.className="codex-cell locked"; cell.innerHTML=`<div class="q">？</div><small>${clueFor(f)}</small>`; }
     grid.appendChild(cell); }
   $("codexCount").textContent=codex.size; $("codexTotal").textContent=ALL_FORMS.length;
 }
@@ -657,7 +705,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.11.0";                // 段四：#12 創世湯 + 完整版結局
+const APP_VERSION="0.12.0";                // #11 收尾 + #13 豪華版隱藏料理 + #14 圖鑑線索
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
