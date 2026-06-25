@@ -1,4 +1,8 @@
-/* ════════ 時空料理 — 羊皮紙手抄本風（M2）════════ */
+/* ════════ 時空料理 — 羊皮紙手抄本風 ════════ */
+/* #16 自託管子集字體（Noto Serif CJK TC，OFL；離線可用、不依賴 CDN）*/
+@font-face{ font-family:"Noto Serif TC"; font-weight:400; font-style:normal; font-display:swap; src:url("./fonts/chrono-serif.woff2") format("woff2"); }
+@font-face{ font-family:"Noto Serif TC"; font-weight:700; font-style:normal; font-display:swap; src:url("./fonts/chrono-serif-bold.woff2") format("woff2"); }
+
 :root{
   --parchment:#e9dcc0; --parchment-dark:#ddcaa4;
   --burnt:#4a3120; --ink:#3a2c1a; --ink-faded:#7a6845;

@@ -705,7 +705,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.12.0";                // #11 收尾 + #13 豪華版隱藏料理 + #14 圖鑑線索
+const APP_VERSION="0.13.0";                // #16 字體自託管 + 子集化
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點

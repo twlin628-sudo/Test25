@@ -1,0 +1,10 @@
+字型：chrono-serif.woff2 / chrono-serif-bold.woff2
+來源：Noto Serif CJK TC（Regular / Bold），已子集化為本遊戲實際用到的字元。
+著作權：© Google 與貢獻者。
+授權：SIL Open Font License 1.1 (OFL-1.1)
+全文：https://scripts.sil.org/OFL
+專案：https://github.com/notofonts/noto-cjk
+
+OFL 允許自由使用、嵌入、修改與隨軟體再散布（包含子集化），惟須保留本授權聲明、
+不得單獨販售字型本身，亦不得以保留字型名稱（Reserved Font Name）發布修改版。
+本檔僅嵌入子集供遊戲離線顯示，符合上述條款；散布本遊戲時請保留此說明。
