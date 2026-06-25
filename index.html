@@ -253,14 +253,16 @@
 <div id="app" data-era="apocalypse">
 
   <header class="topbar">
+    <div class="toprow">
+      <span class="version" id="version"></span>
+      <div class="topbtns">
+        <button class="iconbtn" id="helpBtn" aria-label="玩法說明">玩法</button>
+        <button class="iconbtn" id="cookbookBtn" aria-label="食譜">食譜</button>
+        <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
+      </div>
+    </div>
     <h1 class="booktitle">永恆食譜</h1>
     <p class="folio" id="folio">殘頁 · 文明終末</p>
-    <span class="version" id="version"></span>
-    <div class="topbtns">
-      <button class="iconbtn" id="helpBtn" aria-label="玩法說明">玩法</button>
-      <button class="iconbtn" id="cookbookBtn" aria-label="食譜">食譜</button>
-      <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
-    </div>
   </header>
 
   <nav class="eras" id="eraNav" hidden></nav>

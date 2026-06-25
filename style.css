@@ -71,14 +71,15 @@ h1,h2,h3{ margin:0; font-weight:600; }
 @keyframes paradoxShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-1.5px);} 75%{ transform:translateX(1.5px);} }
 @media(min-width:560px){ #app{ max-width:520px; margin:0 auto; border-left:1px solid var(--burnt); border-right:1px solid var(--burnt); box-shadow:0 0 60px rgba(0,0,0,.6);} }
 
-.topbar{ position:relative; text-align:center; padding:16px 14px 8px; border-bottom:2px solid var(--burnt);
+.topbar{ position:relative; text-align:center; padding:8px 12px; border-bottom:2px solid var(--burnt);
   background:linear-gradient(180deg, rgba(74,49,32,.10), transparent); z-index:6; }
-.booktitle{ font-size:28px; font-weight:900; letter-spacing:.16em; }
-.booktitle::before,.booktitle::after{ content:"❧"; color:var(--vermilion); opacity:.6; margin:0 .4em; font-size:16px; vertical-align:middle; }
+.toprow{ display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:26px; }
+.booktitle{ font-size:26px; font-weight:900; letter-spacing:.14em; margin-top:2px; }
+.booktitle::before,.booktitle::after{ content:"❧"; color:var(--vermilion); opacity:.6; margin:0 .35em; font-size:15px; vertical-align:middle; }
 .folio{ margin:3px 0 0; font-size:13px; color:var(--ink-faded); letter-spacing:.08em; }
-.topbtns{ position:absolute; right:10px; top:12px; display:flex; gap:6px; }
-.iconbtn{ background:none; border:1px solid var(--ink-faded); border-radius:4px; font-size:12px; padding:4px 8px; color:var(--ink-faded); }
-.version{ position:absolute; left:10px; top:18px; font-size:11px; color:var(--ink-faded); letter-spacing:.05em; opacity:.8; }
+.topbtns{ display:flex; gap:6px; flex:0 0 auto; }
+.iconbtn{ background:none; border:1px solid var(--ink-faded); border-radius:4px; font-size:12px; padding:4px 8px; color:var(--ink-faded); white-space:nowrap; }
+.version{ font-size:11px; color:var(--ink-faded); letter-spacing:.05em; opacity:.8; white-space:nowrap; flex:0 0 auto; }
 
 /* 玩家說明書 */
 .manual{ position:fixed; inset:0; z-index:65; display:flex; align-items:center; justify-content:center; padding:16px;
