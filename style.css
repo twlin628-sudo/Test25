@@ -8,6 +8,7 @@
   --shadow:rgba(58,44,26,.28);
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+[hidden]{ display:none !important; }   /* 確保 hidden 一定生效（覆蓋 .modal/.discovery 的 display:flex）*/
 html,body{ height:100%; margin:0; -webkit-text-size-adjust:100%; overscroll-behavior:none; }
 body{
   font-family:"Noto Serif TC","Songti TC","Times New Roman",serif;

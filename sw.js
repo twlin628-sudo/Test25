@@ -1,6 +1,6 @@
 /* 時空料理 — Service Worker（離線快取 App Shell）
    ★ 每次更新內容請把 CACHE 版本號 +1，才會刷新快取。 */
-const CACHE = "chrono-cuisine-v1";
+const CACHE = "chrono-cuisine-v2";
 const ASSETS = [
   "./",
   "./index.html",
