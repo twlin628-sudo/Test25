@@ -1,7 +1,7 @@
 /* 時空料理 — Service Worker
    策略：網路優先（network-first）。線上一律拿最新版並更新快取；離線時回退快取。
    ★ 改動內容時把 CACHE 版本號 +1。 */
-const CACHE = "chrono-cuisine-v4";
+const CACHE = "chrono-cuisine-v5";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,10 @@ const ASSETS = [
   "./app.js",
   "./manifest.webmanifest",
   "./favicon.svg",
+  "./icons/icon-180.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-512-maskable.png",
 ];
 
 self.addEventListener("install", (e) => {

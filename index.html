@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="永恆食譜">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="./favicon.svg">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
@@ -164,6 +164,12 @@
 
 <!-- 委託完成提示 -->
 <div class="toast" id="toast" hidden></div>
+
+<!-- 新手引導字幕 -->
+<div class="ftue-caption" id="ftueCaption" hidden>
+  <span id="ftueText"></span>
+  <button id="ftueSkip" class="ftue-skip">略過引導</button>
+</div>
 
 <!-- 結局 -->
 <div class="ending" id="ending" hidden>
