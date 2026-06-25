@@ -1,6 +1,7 @@
-/* 時空料理 — Service Worker（離線快取 App Shell）
-   ★ 每次更新內容請把 CACHE 版本號 +1，才會刷新快取。 */
-const CACHE = "chrono-cuisine-v2";
+/* 時空料理 — Service Worker
+   策略：網路優先（network-first）。線上一律拿最新版並更新快取；離線時回退快取。
+   ★ 改動內容時把 CACHE 版本號 +1。 */
+const CACHE = "chrono-cuisine-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -27,6 +28,12 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((r) => r || fetch(e.request).catch(() => r))
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
