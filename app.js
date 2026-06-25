@@ -10,11 +10,12 @@ const ERAS = {
   industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg","meat"],rares:[] },
   medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],           rares:[] },
   egypt:     { id:"egypt",      name:"古埃及",   envTags:["dry"],   tools:["kiln"],  commons:["wheat","nilefish"],        rares:[] },
+  stone:     { id:"stone",      name:"石器時代", envTags:["smoke"], tools:["smoker"],commons:["meat","berry","wildhoney"],rares:[] },
   // 遠征專屬紀元（不在一般翻頁清單）
-  jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                          rares:["dragon"], expedition:true },
+  jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                          rares:["dragon","giant_egg","spice"], expedition:true },
 };
-const ERA_ORDER = ["apocalypse","industrial","medieval","egypt"];
-const ERA_UNLOCK = { egypt:0.40 };   // 以圖鑑完成度解鎖（之後加 stone/future）
+const ERA_ORDER = ["apocalypse","industrial","medieval","egypt","stone"];
+const ERA_UNLOCK = { egypt:0.40, stone:0.55 };   // 以圖鑑完成度解鎖（之後加 future）
 const EXPEDITIONS = ["jurassic"];   // #1：可遠征的古老紀元
 const EXPED_CAP = 3;                 // 每趟遠征可採集稀有食材的份數
 // #2 悖論
@@ -27,7 +28,7 @@ const ENERGY_MAX = 12;
 const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定 的耗能
 const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
 const LAY_COOLDOWN = 3;                              // #4 母雞產蛋冷卻（以動作計）
-const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯" };   // #5 工具顯示名
+const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯", smoker:"煙燻架" };   // #5 工具顯示名
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -101,6 +102,24 @@ const INGREDIENTS = {
       "nilefish.aged":{name:"陳年鹹魚",art:"dried_fish",tag:"rare"}, "nilefish.rotten":{name:"腐魚",art:"nilefish",tag:"spoiled"} },
     transitions:[ {from:"nilefish.fresh",at:3,to:"nilefish.dried",requiresEnv:"dry"}, {from:"nilefish.fresh",at:3,to:"nilefish.dried",requiresEnv:"smoke"},
       {from:"nilefish.fresh",at:5,to:"nilefish.rotten"}, {from:"nilefish.dried",at:365,to:"nilefish.aged"} ]},
+  /* 段二 #7 石器時代食材 */
+  berry:{ id:"berry", name:"野果", base:"berry.fresh", forms:{
+      "berry.fresh":{name:"野果",art:"berry",tag:"fresh"}, "berry.dried":{name:"野果乾",art:"raisin",tag:"normal"},
+      "berry.dust":{name:"塵",art:"dust",tag:"fossil"} },
+    transitions:[ {from:"berry.fresh",at:30,to:"berry.dried"}, {from:"berry.dried",at:3650,to:"berry.dust"} ]},
+  wildhoney:{ id:"wildhoney", name:"野蜂蜜", base:"wildhoney.fresh", forms:{
+      "wildhoney.fresh":{name:"野蜂蜜",art:"honey",tag:"fresh"}, "wildhoney.crystal":{name:"野生結晶蜜",art:"crystal_honey",tag:"normal"},
+      "wildhoney.amber":{name:"原始琥珀",art:"amber_honey",tag:"mythic"} },
+    transitions:[ {from:"wildhoney.fresh",at:365,to:"wildhoney.crystal"}, {from:"wildhoney.crystal",at:365000,to:"wildhoney.amber"} ]},
+  candy:{ id:"candy", name:"蜜餞野果", base:"candy", forms:{
+      "candy":{name:"蜜餞野果",art:"candy",tag:"rare"} }, transitions:[] },
+  /* 段二 #8 補完侏儸紀 */
+  giant_egg:{ id:"giant_egg", name:"巨蛋", base:"giant_egg.fresh", forms:{
+      "giant_egg.fresh":{name:"巨蛋",art:"giant_egg",tag:"rare"}, "giant_egg.dragon":{name:"破殼巨龍",art:"dragon",tag:"mythic"} },
+    transitions:[ {from:"giant_egg.fresh",at:14,to:"giant_egg.dragon",requiresEnv:"warm"} ]},
+  spice:{ id:"spice", name:"史前香料", base:"spice.fresh", forms:{
+      "spice.fresh":{name:"史前香料",art:"spice",tag:"rare"}, "spice.fossil":{name:"化石香料",art:"spice",tag:"fossil"} },
+    transitions:[ {from:"spice.fresh",at:36500,to:"spice.fossil"} ]},
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -123,9 +142,11 @@ const RECIPES = [
              {match:{tag:"rare", art:"cheese"}, count:1},
              {match:{formId:"honey.ancient"}, count:1} ] },
   { id:"dragon_soup", name:"龍肉湯", tool:null, era:null, output:"dsoup", hidden:true,
-    inputs:[ {match:{formId:"dragon.elder"}, count:1} ] },
+    inputs:[ {match:{art:"dragon", tag:"mythic"}, count:1} ] },   // 巨龍 或 破殼巨龍 皆可
   { id:"ancient_bread", name:"古法麵包", tool:"kiln", era:"egypt", output:"bread",
     inputs:[ {match:{formId:"wheat.fresh"}, count:1} ] },
+  { id:"candied_berry", name:"蜜餞野果", tool:null, era:null, output:"candy", hidden:true,
+    inputs:[ {match:{formId:"berry.fresh"}, count:1}, {match:{formId:"wildhoney.fresh"}, count:1} ] },
 ];
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
@@ -169,6 +190,11 @@ const COPY = {
  "meat.mummy":"乾到極致，宛如法老的隨葬。","meat.fossil":"連時間都嚼不動了。","meat.rotten":"沒有乾燥，肉很快就壞了。",
  "wheat.fresh":"古代的麥子。文明的主食，自此而生。","wheat.dust":"麥子也終歸塵土。",
  "nilefish.fresh":"尼羅河的恩賜。","nilefish.dried":"日曬成乾，鹹香撲鼻。魚乾。","nilefish.aged":"陳年鹹魚，越陳越鮮。","nilefish.rotten":"離了水又沒晾乾，魚就臭了。",
+ "berry.fresh":"林間野果，酸甜帶澀。","berry.dried":"曬乾的野果，甜味濃縮了。","berry.dust":"野果最終也化作塵。",
+ "wildhoney.fresh":"野蜂築巢所釀，比馴養的更野、更香。","wildhoney.crystal":"野蜜也會結晶。","wildhoney.amber":"野性的盡頭，凝成原始琥珀。",
+ "candy":"野果裹上野蜜——史前的甜點。",
+ "giant_egg.fresh":"比人頭還大的蛋。裡頭睡著什麼？","giant_egg.dragon":"溫暖喚醒了牠——破殼而出的巨龍。",
+ "spice.fresh":"史前的香料，氣味濃烈得不像這個世界。","spice.fossil":"連香氣都成了化石。",
 };
 
 /* 歲月之軸節點 */
@@ -607,7 +633,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.8.0";                 // 段一：#6 古埃及 + #10 肉類 + #11 古代小麥/尼羅魚
+const APP_VERSION="0.9.0";                 // 段二：#7 石器時代 + #11 野蜂蜜 + #8 補完侏儸紀
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
