@@ -300,6 +300,7 @@
       <label class="axis-label">歲月之軸　<span id="axisReadout">此刻</span></label>
       <input type="range" id="axis" min="0" max="1000" value="0" step="1" aria-label="歲月之軸">
       <div class="axis-ticks" id="axisTicks"></div>
+      <p class="sel-hint" id="selHint" hidden></p>
       <div class="sel-actions">
         <button class="age-btn" id="ageBtn" disabled>熟成 — 讓歲月經過</button>
         <button class="ghost" id="layBtn" hidden>產蛋</button>
@@ -423,6 +424,19 @@
   </div>
 </div>
 
+<!-- 版權與致謝 -->
+<div class="manual" id="credits" hidden>
+  <div class="manual-card credits-card">
+    <h2>版權與致謝</h2>
+    <p class="credits-game">時空料理 · Chrono Cuisine</p>
+    <section><h3>製作</h3><p>作者／製作　<b>魯龍大師</b></p></section>
+    <section><h3>贊助</h3><p>感謝贊助者　<b>Kevin</b></p></section>
+    <section><h3>授權</h3><p>© 2026 魯龍大師　保留一切權利。<br>程式採 MIT 授權。<br>字體：Noto Serif CJK TC（SIL OFL-1.1）。</p></section>
+    <p class="credits-thanks">謹以此書，獻給所有願意等待時間的人。</p>
+    <button class="closebtn" id="closeCredits">闔上</button>
+  </div>
+</div>
+
 <!-- 設定 / 存檔 -->
 <div class="modal" id="menu" hidden>
   <div class="modal-card">
@@ -431,6 +445,7 @@
     <button id="exportBtn">謄抄副本（匯出存檔）</button>
     <button id="importBtn">拓印還原（匯入存檔）</button>
     <button id="resetBtn" class="danger">焚書重來（清除進度）</button>
+    <button id="creditsBtn" class="ghost">版權與致謝</button>
     <button id="closeMenu" class="ghost">闔上</button>
     <p class="hint">提示：在 iPhone 上「分享 → 加入主畫面」可離線遊玩並更穩固地保存進度。</p>
   </div>

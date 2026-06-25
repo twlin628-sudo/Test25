@@ -91,12 +91,19 @@ h1,h2,h3{ margin:0; font-weight:600; }
 .manual-card p{ font-size:14px; line-height:1.95; margin:4px 0; }
 .manual-card b{ color:var(--ink); font-weight:700; }
 .manual-card .closebtn{ display:block; width:100%; margin-top:20px; padding:12px; background:var(--ink); color:var(--parchment); border:none; border-radius:6px; font-size:15px; }
+.credits-card{ text-align:center; }
+.credits-card section{ text-align:center; }
+.credits-card h3{ border:none; display:inline-block; font-size:14px; }
+.credits-game{ font-size:18px; font-weight:700; color:var(--ink); margin:2px 0 6px; }
+.credits-card b{ font-size:18px; color:var(--vermilion); }
+.credits-thanks{ margin-top:18px; font-size:13px; color:var(--ink-faded); font-style:italic; }
 
 /* 紀元頁籤 */
 .eras{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; padding:10px 12px; position:relative; z-index:6;
   border-bottom:1px dashed var(--ink-faded); }
 .era-tab{ padding:6px 12px; font-size:14px; border:1px solid var(--ink-faded); border-radius:16px; background:rgba(255,255,255,.12); }
 .era-tab.active{ background:var(--ink); color:var(--parchment); border-color:var(--ink); }
+.era-tab small{ font-size:10px; opacity:.75; }
 
 .page{ padding:12px 16px 48px; position:relative; z-index:6; }
 .page.turning{ animation:pageturn .5s ease; transform-origin:left center; }
@@ -117,6 +124,8 @@ h1,h2,h3{ margin:0; font-weight:600; }
   background:var(--vermilion); color:#fff; border:none; border-radius:6px; box-shadow:0 3px 0 #7c281d; }
 .make-btn.mystery{ background:none; color:var(--vermilion); border:1.5px dashed var(--vermilion); box-shadow:none; }
 .make-btn:active{ transform:translateY(2px); box-shadow:none; }
+.craft-hint{ font-size:13px; color:var(--vermilion); text-align:center; padding:9px; margin-top:8px; border:1px dashed var(--ink-faded); border-radius:6px; background:rgba(163,57,42,.06); }
+.sel-hint{ font-size:13px; line-height:1.6; color:var(--vermilion); margin:8px 0 0; padding:7px 10px; border-left:3px solid var(--gold); background:rgba(184,136,31,.08); border-radius:0 4px 4px 0; }
 
 /* 庫存（調理之頁） */
 .inv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:10px; }

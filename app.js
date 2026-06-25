@@ -30,6 +30,8 @@ const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定
 const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
 const LAY_COOLDOWN = 3;                              // #4 母雞產蛋冷卻（以動作計）
 const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯", smoker:"煙燻架", recombinator:"分子重組器" };   // #5 工具顯示名
+const ENV_NAMES = { warm:"溫暖", dry:"乾燥", smoke:"煙燻", freeze:"冷藏" };   // U1 環境顯示名
+function envLabel(eraId){ const e=ERAS[eraId]; return (e&&e.envTags.length)? e.envTags.map(t=>ENV_NAMES[t]||t).join("·") : ""; }
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -266,7 +268,7 @@ const COPY = {
 };
 
 /* 歲月之軸節點 */
-const NODES = [ {d:0,label:"今日"},{d:30,label:"一月"},{d:365,label:"一年"},{d:36500,label:"百年"},{d:365000,label:"千年"},{d:1095000,label:"三千年"} ];
+const NODES = [ {d:0,label:"今日"},{d:1,label:"一日"},{d:7,label:"七日"},{d:30,label:"一月"},{d:365,label:"一年"},{d:36500,label:"百年"},{d:365000,label:"千年"},{d:1095000,label:"三千年"} ];
 const MAX_DAYS = 1095000, SLIDER_MAX = 1000;
 
 /* ───────── 引擎（純函式）───────── */
@@ -365,7 +367,7 @@ let selectedUid=null;
 
 /* ───────── 渲染 ───────── */
 function curEra(){ return ERAS[S.kitchenEra]; }
-function renderFolio(){ $("folio").textContent = "殘頁 · "+curEra().name; document.getElementById("app").dataset.era = S.kitchenEra; }
+function renderFolio(){ const ev=envLabel(S.kitchenEra); $("folio").textContent = "殘頁 · "+curEra().name+(ev?"（"+ev+"）":""); document.getElementById("app").dataset.era = S.kitchenEra; }
 function renderEraNav(){
   const nav=$("eraNav");
   if(S.expedition){ nav.hidden=true; return; }   // 遠征中不可翻頁，須先返回
@@ -373,7 +375,7 @@ function renderEraNav(){
   nav.hidden=false; nav.innerHTML="";
   for(const eid of ERA_ORDER){ if(!S.unlocked.eras.includes(eid)) continue;
     const b=document.createElement("button"); b.className="era-tab"+(eid===S.kitchenEra?" active":"");
-    b.textContent=ERAS[eid].name; b.onclick=()=>switchEra(eid); nav.appendChild(b); }
+    const ev=envLabel(eid); b.innerHTML=ERAS[eid].name+(ev?` <small>${ev}</small>`:""); b.onclick=()=>switchEra(eid); nav.appendChild(b); }
 }
 function renderOrder(){
   const id=S.orders.active, box=$("orderBox");
@@ -393,14 +395,38 @@ function renderInventory(){
   }
 }
 function shortAge(d){ if(d<=0)return""; if(d<365)return"·"; if(d<36500)return Math.round(d/365)+"y"; return Math.round(d/365/100)/10+"c"; }
+function inputsOK(r){   // 只看材料是否到齊（忽略工具/紀元）
+  const used=new Set();
+  for(const inp of r.inputs){ let need=inp.count;
+    for(const it of S.inventory){ if(used.has(it.uid))continue; if(itemMatches(it,inp.match)){ used.add(it.uid); if(--need<=0) break; } }
+    if(need>0) return false; }
+  return true;
+}
 function renderCraft(){
   const box=$("craftBox"); box.innerHTML="";
-  for(const m of matchRecipes()){
+  const matches=matchRecipes();
+  for(const m of matches){
     const b=document.createElement("button"); const r=m.recipe;
     const known = !r.hidden || discovered(INGREDIENTS[r.output].base);
     b.className="make-btn"+(known?"":" mystery");
     b.textContent = known ? ("製作 "+r.name) : "？ 似乎可調理……";
     b.onclick=()=>makeRecipe(m); box.appendChild(b);
+  }
+  // U2/U3-lite：材料到齊但缺工具/紀元 → 提示需要什麼
+  if(!matches.length){
+    for(const r of RECIPES){
+      if(!inputsOK(r)) continue;
+      const toolMiss = r.tool && !ERAS[S.kitchenEra].tools.includes(r.tool);
+      const eraMiss  = r.era && r.era!==S.kitchenEra;
+      if(!toolMiss && !eraMiss) continue;
+      const parts=[];
+      if(r.tool) parts.push(TOOL_NAMES[r.tool]||r.tool);
+      if(r.era) parts.push(ERAS[r.era].name);
+      else if(toolMiss){ const e=Object.values(ERAS).find(x=>x.tools.includes(r.tool)); if(e) parts.push(e.name); }
+      const p=document.createElement("p"); p.className="craft-hint";
+      p.textContent="材料似乎湊齊了，但需要：「"+parts.join("·")+"」";
+      box.appendChild(p); break;
+    }
   }
 }
 function renderSelected(){
@@ -421,12 +447,26 @@ function renderSelected(){
   const isHen = it.formId==="hen.fresh";
   $("layBtn").hidden = !isHen;
   if(isHen){ const rest=(it.layRest||0)>0; $("layBtn").disabled=rest; $("layBtn").textContent= rest?"母雞休息中…":"產蛋"; }
+  const hint = envHint(it); $("selHint").textContent = hint; $("selHint").hidden = !hint;   // U2 條件提示
+}
+// U2：依選取物的「目前形態」是否有條件轉化，提示需要的環境
+function envHint(item){
+  const ing=INGREDIENTS[item.id]; if(!ing) return "";
+  const env=ERAS[S.kitchenEra].envTags;
+  const conds=ing.transitions.filter(t=>t.from===item.formId && t.requiresEnv);
+  if(!conds.length) return "";
+  const target=conds[0].to;
+  const needs=[...new Set(conds.filter(t=>t.to===target).map(t=>ENV_NAMES[t.requiresEnv]||t.requiresEnv))];
+  const goodName=FORMS[target]?FORMS[target].name:"";
+  const satisfied=conds.some(t=>t.to===target && env.includes(t.requiresEnv));
+  return satisfied ? `此地環境適合：熟成可成「${goodName}」`
+                   : `需【${needs.join("或")}】環境才能成為「${goodName}」（此地會走向其他變化）`;
 }
 function renderPantry(){
   const row=$("pantryRow"); row.innerHTML="";
   const onExped = !!S.expedition;
   const list = onExped ? curEra().rares : curEra().commons;
-  $("pantryEra").textContent = curEra().name + (onExped ? `（稀有 · 剩 ${S.expedition.left}）` : "");
+  $("pantryEra").textContent = curEra().name + (envLabel(S.kitchenEra)?" · "+envLabel(S.kitchenEra):"") + (onExped ? `（稀有 · 剩 ${S.expedition.left}）` : "");
   $("pantryEmpty").hidden = list.length>0;
   for(const id of list){ const ing=INGREDIENTS[id]; const el=document.createElement("button");
     el.className="pantry-item"; el.dataset.tag = onExped ? "rare" : "fresh";
@@ -615,7 +655,7 @@ function renderExpedition(){
   const banner=$("expedBanner"), sect=$("expedSection");
   if(S.expedition){
     banner.hidden=false; sect.hidden=true;
-    $("expedBannerText").textContent="遠征中 · "+ERAS[S.expedition.dest].name+"（稀有採集剩 "+S.expedition.left+"）";
+    $("expedBannerText").textContent="遠征中 · "+ERAS[S.expedition.dest].name+(envLabel(S.expedition.dest)?"（"+envLabel(S.expedition.dest)+"）":"")+"　稀有採集剩 "+S.expedition.left;
   }else{
     banner.hidden=true;
     if(S.unlocked.actions.includes("expedition")){
@@ -655,6 +695,8 @@ $("menuBtn").addEventListener("click",()=>{ $("vol").value=vol(); $("menu").hidd
 $("closeMenu").addEventListener("click",()=>$("menu").hidden=true);
 $("helpBtn").addEventListener("click",()=>$("manual").hidden=false);
 $("closeManual").addEventListener("click",()=>$("manual").hidden=true);
+$("creditsBtn").addEventListener("click",()=>{ $("menu").hidden=true; $("credits").hidden=false; });
+$("closeCredits").addEventListener("click",()=>$("credits").hidden=true);
 $("vol").addEventListener("input",e=>{ S.settings.volume=+e.target.value; persist(); });
 $("exportBtn").addEventListener("click",()=>{ const data=JSON.stringify(S);
   navigator.clipboard?.writeText(data).catch(()=>{}); const blob=new Blob([data],{type:"application/json"});
@@ -707,7 +749,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.14.0";                // U0 玩家說明書（可叫出）
+const APP_VERSION="0.15.0";                // U1 環境揭露 + U4 滑桿短窗 + U2 條件提示 + 版權頁
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
