@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>時空料理 — 永恆食譜</title>
+<meta name="description" content="在時間裡做菜。穿越歲月熟成食材，重建失落的料理文明。">
+<meta name="theme-color" content="#3a2c1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="永恆食譜">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- ════════ 手繪食材線稿 sprite（無 emoji；stroke=currentColor，由 CSS 依 tag 著色）════════ -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="art-milk" viewBox="0 0 100 100">
+    <path d="M42 16h16v9l6 11v38a6 6 0 0 1-6 6H42a6 6 0 0 1-6-6V36l6-11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M40 56h20" stroke="currentColor" stroke-width="2"/>
+    <path d="M42 16h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="art-cheese" viewBox="0 0 100 100">
+    <path d="M18 62 78 38l3 16-58 24z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M18 62 21 78" fill="none" stroke="currentColor" stroke-width="2.6"/>
+    <circle cx="40" cy="58" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <circle cx="54" cy="52" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <circle cx="50" cy="66" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+  </symbol>
+  <symbol id="art-grape" viewBox="0 0 100 100">
+    <path d="M50 18c10-6 18-2 14 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <g fill="none" stroke="currentColor" stroke-width="2.2">
+      <circle cx="50" cy="34" r="7"/><circle cx="40" cy="46" r="7"/><circle cx="60" cy="46" r="7"/>
+      <circle cx="50" cy="48" r="7"/><circle cx="44" cy="60" r="7"/><circle cx="56" cy="60" r="7"/>
+      <circle cx="50" cy="72" r="7"/>
+    </g>
+  </symbol>
+  <symbol id="art-raisin" viewBox="0 0 100 100">
+    <g fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M38 44c-5 4-4 12 2 14s12-3 11-10-8-9-13-4z"/>
+      <path d="M58 50c-4 3-3 11 3 12s10-4 9-10-8-6-12-2z"/>
+      <path d="M48 62c-4 3-3 10 2 11s9-3 8-9-6-6-10-2z"/>
+    </g>
+  </symbol>
+  <symbol id="art-dust" viewBox="0 0 100 100">
+    <path d="M30 70q20 8 40 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <g fill="currentColor"><circle cx="44" cy="60" r="1.6"/><circle cx="52" cy="56" r="1.6"/><circle cx="58" cy="62" r="1.6"/><circle cx="48" cy="64" r="1.4"/><circle cx="38" cy="64" r="1.4"/><circle cx="62" cy="58" r="1.2"/></g>
+  </symbol>
+  <symbol id="art-honey" viewBox="0 0 100 100">
+    <path d="M36 40h28v34a6 6 0 0 1-6 6H42a6 6 0 0 1-6-6z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M33 40h34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M50 18v18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M44 24h12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M50 52v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="art-crystal_honey" viewBox="0 0 100 100">
+    <path d="M36 40h28v34a6 6 0 0 1-6 6H42a6 6 0 0 1-6-6z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M33 40h34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <g fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M42 58l6-6 6 6-6 6z"/><path d="M54 68l5-5 5 5-5 5z"/><path d="M40 72l4-4 4 4-4 4z"/>
+    </g>
+  </symbol>
+  <symbol id="art-amber_honey" viewBox="0 0 100 100">
+    <path d="M50 20 74 44 62 80H38L26 44z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <g fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M50 20 50 80M26 44 74 44M38 80 50 44 62 80M50 44 26 44M50 44 74 44"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- ════════ 應用 ════════ -->
+<div id="app">
+
+  <header class="topbar">
+    <h1 class="booktitle">永恆食譜</h1>
+    <p class="folio" id="folio">殘頁 · 文明終末 · Anno 2026</p>
+    <button class="iconbtn" id="menuBtn" aria-label="設定">設定</button>
+  </header>
+
+  <main class="page">
+
+    <!-- 調理之頁 -->
+    <section class="bench" id="bench" aria-live="polite">
+      <div class="bench-empty" id="benchEmpty">
+        <p>自書頁下方<strong>輕觸一樣食材</strong>，置於此處。</p>
+      </div>
+      <div class="bench-item" id="benchItem" hidden>
+        <svg class="artwork" id="benchArt" viewBox="0 0 100 100"><use href="#art-milk"/></svg>
+        <div class="bench-name" id="benchName">牛奶</div>
+        <div class="bench-age" id="benchAge">此刻</div>
+      </div>
+    </section>
+
+    <!-- 歲月之軸 -->
+    <section class="axis" id="axisSection" hidden>
+      <label class="axis-label">歲月之軸　<span id="axisReadout">此刻</span></label>
+      <input type="range" id="axis" min="0" max="1000" value="0" step="1" aria-label="歲月之軸">
+      <div class="axis-ticks" id="axisTicks"></div>
+      <button class="age-btn" id="ageBtn" disabled>熟成 — 讓歲月經過</button>
+    </section>
+
+    <!-- 食材（無限取用） -->
+    <section class="pantry">
+      <h2 class="sect-title">食材</h2>
+      <div class="pantry-row" id="pantryRow"></div>
+    </section>
+
+    <!-- 永恆食譜（圖鑑） -->
+    <section class="codex">
+      <h2 class="sect-title">圖鑑 — 已補回 <span id="codexCount">0</span> / <span id="codexTotal">0</span> 頁</h2>
+      <div class="codex-grid" id="codexGrid"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 發現橫幅 -->
+<div class="discovery" id="discovery" hidden>
+  <div class="discovery-card">
+    <div class="gild-bloom"></div>
+    <svg class="discovery-art" id="discoveryArt" viewBox="0 0 100 100"><use href="#art-cheese"/></svg>
+    <div class="discovery-name" id="discoveryName">起司</div>
+    <div class="discovery-desc" id="discoveryDesc"></div>
+    <div class="discovery-stamp">補上了一頁</div>
+  </div>
+</div>
+
+<!-- 設定 / 存檔 -->
+<div class="modal" id="menu" hidden>
+  <div class="modal-card">
+    <h3>藏書閣</h3>
+    <label class="row">音量 <input type="range" id="vol" min="0" max="1" step="0.05" value="0.8"></label>
+    <button id="exportBtn">謄抄副本（匯出存檔）</button>
+    <button id="importBtn">拓印還原（匯入存檔）</button>
+    <button id="resetBtn" class="danger">焚書重來（清除進度）</button>
+    <button id="closeMenu" class="ghost">闔上</button>
+    <p class="hint">提示：在 iPhone 上「分享 → 加入主畫面」可離線遊玩並更穩固地保存進度。</p>
+  </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>

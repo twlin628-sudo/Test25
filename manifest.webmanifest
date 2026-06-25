@@ -1,0 +1,15 @@
+{
+  "name": "時空料理 — 永恆食譜",
+  "short_name": "永恆食譜",
+  "description": "在時間裡做菜。穿越歲月熟成食材，重建失落的料理文明。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9dcc0",
+  "theme_color": "#3a2c1a",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

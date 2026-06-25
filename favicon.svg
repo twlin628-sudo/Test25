@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#e9dcc0"/>
+  <rect width="512" height="512" fill="url(#g)"/>
+  <defs>
+    <radialGradient id="g" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".18"/>
+      <stop offset="70%" stop-color="#4a3120" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a3120" stop-opacity=".5"/>
+    </radialGradient>
+  </defs>
+  <!-- 金色時光之陽 -->
+  <circle cx="256" cy="150" r="46" fill="none" stroke="#b8881f" stroke-width="10"/>
+  <g stroke="#b8881f" stroke-width="9" stroke-linecap="round">
+    <path d="M256 74v22M256 204v22M180 150h22M310 150h22M203 97l15 15M309 188l-15-15M309 112l-15 15M203 203l15-15"/>
+  </g>
+  <!-- 攤開的書 -->
+  <g fill="none" stroke="#3a2c1a" stroke-width="12" stroke-linejoin="round">
+    <path d="M256 300c-40-30-96-30-130-12v150c34-18 90-18 130 12 40-30 96-30 130-12V288c-34-18-90-18-130 12z"/>
+    <path d="M256 300v150"/>
+  </g>
+  <g stroke="#a3392a" stroke-width="6" stroke-linecap="round" opacity=".8">
+    <path d="M170 330h60M170 360h60M286 330h60M286 360h60"/>
+  </g>
+</svg>

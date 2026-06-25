@@ -1,0 +1,141 @@
+/* ════════ 時空料理 — 羊皮紙手抄本風 ════════ */
+:root{
+  --parchment:#e9dcc0; --parchment-dark:#ddcaa4; --parchment-deep:#cdb78c;
+  --burnt:#4a3120;
+  --ink:#3a2c1a; --ink-faded:#7a6845;
+  --vermilion:#a3392a; --gold:#b8881f; --gold-lit:#e9c95e;
+  --verdigris:#5f7350; --fossil:#8d8475;
+  --shadow:rgba(58,44,26,.28);
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; margin:0; -webkit-text-size-adjust:100%; overscroll-behavior:none; }
+body{
+  font-family:"Noto Serif TC","Songti TC","Times New Roman",serif;
+  color:var(--ink); background:#1c150d;
+}
+button{ font-family:inherit; color:var(--ink); cursor:pointer; }
+h1,h2,h3{ margin:0; font-weight:600; }
+
+/* 羊皮紙底（多層 radial 漸層模擬斑駁 + 焦邊） */
+#app{
+  position:fixed; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,.10), transparent 60%),
+    radial-gradient(140% 120% at 100% 110%, rgba(74,49,32,.55), transparent 55%),
+    radial-gradient(120% 120% at 0% 100%, rgba(74,49,32,.45), transparent 50%),
+    var(--parchment);
+}
+@media(min-width:560px){
+  #app{ max-width:520px; margin:0 auto; border-left:1px solid var(--burnt); border-right:1px solid var(--burnt);
+        box-shadow:0 0 60px rgba(0,0,0,.6); }
+}
+
+/* 頂欄 */
+.topbar{ position:relative; text-align:center; padding:18px 14px 10px; border-bottom:2px solid var(--burnt);
+  background:linear-gradient(180deg, rgba(74,49,32,.10), transparent); }
+.booktitle{ font-size:30px; font-weight:900; letter-spacing:.16em; color:var(--ink); }
+.booktitle::before,.booktitle::after{ content:"❧"; color:var(--vermilion); opacity:.65; margin:0 .4em; font-size:18px; vertical-align:middle;}
+.folio{ margin:4px 0 0; font-size:13px; color:var(--ink-faded); letter-spacing:.08em; }
+.iconbtn{ position:absolute; right:10px; top:14px; background:none; border:1px solid var(--ink-faded);
+  border-radius:4px; font-size:12px; padding:4px 8px; color:var(--ink-faded); }
+
+.page{ padding:14px 16px 40px; }
+.sect-title{ font-size:15px; color:var(--vermilion); border-bottom:1px dashed var(--ink-faded);
+  padding-bottom:4px; margin:22px 0 12px; letter-spacing:.05em; }
+
+/* 調理之頁 */
+.bench{ min-height:230px; display:flex; align-items:center; justify-content:center;
+  border:1.5px solid var(--ink-faded); border-radius:8px; margin-top:8px; padding:18px;
+  background:radial-gradient(80% 70% at 50% 40%, rgba(255,255,255,.18), transparent 70%); position:relative; }
+.bench-empty{ text-align:center; color:var(--ink-faded); font-size:15px; line-height:1.8; }
+.bench-item{ text-align:center; }
+.artwork{ width:140px; height:140px; color:var(--ink); display:block; margin:0 auto;
+  transition:color .5s ease, filter .5s ease, transform .5s ease; }
+.bench-name{ font-size:22px; font-weight:600; margin-top:6px; }
+.bench-age{ font-size:13px; color:var(--ink-faded); margin-top:2px; }
+.bench.flash{ animation:agewash .6s ease-out; }
+@keyframes agewash{ 0%{ background-color:rgba(184,136,31,.0); } 35%{ background-color:rgba(184,136,31,.22); } 100%{ background-color:rgba(184,136,31,0); } }
+
+/* 食材狀態著色（tag） */
+[data-tag="fresh"]   .artwork,[data-tag="fresh"]  { color:var(--ink); }
+[data-tag="normal"]  .artwork,[data-tag="normal"] { color:var(--ink); }
+[data-tag="spoiled"] .artwork,[data-tag="spoiled"]{ color:var(--verdigris); filter:blur(.2px); }
+[data-tag="fossil"]  .artwork,[data-tag="fossil"] { color:var(--fossil); opacity:.85; }
+[data-tag="rare"]    .artwork,[data-tag="rare"]   { color:var(--gold); filter:drop-shadow(0 0 8px rgba(233,201,94,.7)); }
+[data-tag="mythic"]  .artwork,[data-tag="mythic"] { color:var(--gold-lit);
+  filter:drop-shadow(0 0 12px rgba(233,201,94,.9)); animation:gild 3.5s ease-in-out infinite; }
+@keyframes gild{ 50%{ filter:drop-shadow(0 0 20px rgba(233,201,94,1)); } }
+
+/* 歲月之軸 */
+.axis{ margin-top:18px; padding:14px; border:1px solid var(--ink-faded); border-radius:8px;
+  background:linear-gradient(180deg, rgba(184,136,31,.08), transparent); }
+.axis-label{ display:block; font-size:14px; margin-bottom:10px; letter-spacing:.05em; }
+.axis-label span{ color:var(--vermilion); font-weight:600; }
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px;
+  background:linear-gradient(90deg,var(--gold),var(--ink-faded)); outline:none; }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+  background:var(--parchment); border:2.5px solid var(--vermilion); box-shadow:0 2px 5px var(--shadow); }
+input[type=range]::-moz-range-thumb{ width:26px; height:26px; border-radius:50%;
+  background:var(--parchment); border:2.5px solid var(--vermilion); }
+.axis-ticks{ display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--ink-faded); }
+.age-btn{ width:100%; margin-top:14px; padding:13px; font-size:17px; font-weight:600; letter-spacing:.06em;
+  background:var(--ink); color:var(--parchment); border:none; border-radius:6px; box-shadow:0 3px 0 var(--burnt);
+  transition:transform .08s; }
+.age-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--burnt); }
+.age-btn:disabled{ opacity:.4; box-shadow:none; }
+
+/* 食材列 */
+.pantry-row{ display:flex; gap:12px; flex-wrap:wrap; }
+.pantry-item{ width:78px; padding:8px 4px; text-align:center; border:1px solid var(--ink-faded);
+  border-radius:8px; background:rgba(255,255,255,.12); }
+.pantry-item:active{ transform:scale(.95); }
+.pantry-item .artwork{ width:52px; height:52px; }
+.pantry-item span{ display:block; font-size:13px; margin-top:2px; }
+
+/* 圖鑑 */
+.codex-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:10px; }
+.codex-cell{ aspect-ratio:1/1; border:1px solid var(--ink-faded); border-radius:8px; display:flex;
+  flex-direction:column; align-items:center; justify-content:center; padding:4px; text-align:center;
+  background:rgba(255,255,255,.08); }
+.codex-cell.locked{ color:var(--ink-faded); opacity:.55; }
+.codex-cell .artwork{ width:44px; height:44px; }
+.codex-cell .q{ font-size:26px; color:var(--ink-faded); }
+.codex-cell small{ font-size:11px; margin-top:3px; line-height:1.2; }
+
+/* 發現橫幅 */
+.discovery{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(28,21,13,.55); z-index:50; }
+.discovery-card{ position:relative; width:78%; max-width:320px; padding:30px 22px; text-align:center;
+  background:var(--parchment); border:2px solid var(--gold); border-radius:10px;
+  box-shadow:0 12px 40px rgba(0,0,0,.55); animation:pop .45s cubic-bezier(.2,1.3,.4,1); }
+@keyframes pop{ from{ transform:scale(.7); opacity:0; } }
+.gild-bloom{ position:absolute; inset:0; border-radius:10px; pointer-events:none;
+  background:radial-gradient(circle at 50% 38%, rgba(233,201,94,.85), transparent 60%); animation:bloom 1.1s ease-out forwards; }
+@keyframes bloom{ from{ transform:scale(.3); opacity:.9; } to{ transform:scale(1.6); opacity:0; } }
+.discovery-art{ width:120px; height:120px; color:var(--gold); position:relative;
+  filter:drop-shadow(0 0 10px rgba(233,201,94,.8)); }
+.discovery-name{ font-size:24px; font-weight:900; margin-top:6px; }
+.discovery-desc{ font-size:14px; color:var(--ink-faded); margin-top:8px; line-height:1.7; min-height:2.6em; }
+.discovery-stamp{ display:inline-block; margin-top:14px; padding:5px 14px; color:var(--vermilion);
+  border:2.5px solid var(--vermilion); border-radius:4px; font-weight:600; transform:rotate(-7deg);
+  letter-spacing:.1em; animation:stamp .35s .25s both cubic-bezier(.2,1.5,.4,1); }
+@keyframes stamp{ from{ transform:rotate(-7deg) scale(2.4); opacity:0; } }
+
+/* 設定 modal */
+.modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(28,21,13,.6); z-index:60; }
+.modal-card{ width:84%; max-width:340px; background:var(--parchment); border:2px solid var(--burnt);
+  border-radius:10px; padding:22px; }
+.modal-card h3{ color:var(--vermilion); margin-bottom:14px; }
+.modal-card button{ display:block; width:100%; margin-top:10px; padding:11px; font-size:15px;
+  background:var(--ink); color:var(--parchment); border:none; border-radius:6px; }
+.modal-card button.ghost{ background:none; color:var(--ink); border:1px solid var(--ink-faded); }
+.modal-card button.danger{ background:var(--vermilion); }
+.modal-card .row{ display:flex; align-items:center; gap:10px; font-size:14px; margin-bottom:6px; }
+.modal-card .row input{ flex:1; }
+.hint{ font-size:12px; color:var(--ink-faded); line-height:1.6; margin-top:14px; }
+
+@media(prefers-reduced-motion:reduce){
+  *{ animation:none !important; transition:none !important; }
+}
