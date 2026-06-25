@@ -6,11 +6,15 @@
 
 /* ───────── 紀元 ───────── */
 const ERAS = {
-  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:[] },
-  industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg"] },
-  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"] },
+  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:[],                    rares:[] },
+  industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg"],rares:[] },
+  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],     rares:[] },
+  // 遠征專屬紀元（不在一般翻頁清單）
+  jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                    rares:["dragon"], expedition:true },
 };
 const ERA_ORDER = ["apocalypse","industrial","medieval"];
+const EXPEDITIONS = ["jurassic"];   // #1：可遠征的古老紀元
+const EXPED_CAP = 3;                 // 每趟遠征可採集稀有食材的份數
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -56,6 +60,14 @@ const INGREDIENTS = {
     transitions:[ {from:"wine.fresh",at:365,to:"wine.aged"}, {from:"wine.aged",at:1095000,to:"wine.mythic"} ]},
   eternal:{ id:"eternal", name:"永恆三明治", base:"eternal_sandwich", forms:{
       "eternal_sandwich":{name:"永恆三明治",art:"eternal_sandwich",tag:"mythic"} }, transitions:[] },
+  /* #1 遠征：龍 */
+  dragon:{ id:"dragon", name:"龍", base:"dragon.proto", forms:{
+      "dragon.proto":{name:"龍祖先",art:"dragon",tag:"normal"}, "dragon.young":{name:"幼龍",art:"dragon",tag:"rare"},
+      "dragon.elder":{name:"巨龍",art:"dragon",tag:"mythic"}, "dragon.fossil":{name:"龍化石",art:"dragon",tag:"fossil"} },
+    transitions:[ {from:"dragon.proto",at:7,to:"dragon.young",requiresEnv:"warm"}, {from:"dragon.proto",at:30,to:"dragon.fossil"},
+      {from:"dragon.young",at:365,to:"dragon.elder"} ]},
+  dsoup:{ id:"dsoup", name:"龍肉湯", base:"dragon_soup", forms:{
+      "dragon_soup":{name:"龍肉湯",art:"dragon_soup",tag:"mythic"} }, transitions:[] },
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -77,6 +89,8 @@ const RECIPES = [
     inputs:[ {match:{art:"bread", notTag:"fossil"}, count:1},
              {match:{tag:"rare", art:"cheese"}, count:1},
              {match:{formId:"honey.ancient"}, count:1} ] },
+  { id:"dragon_soup", name:"龍肉湯", tool:null, era:null, output:"dsoup", hidden:true,
+    inputs:[ {match:{formId:"dragon.elder"}, count:1} ] },
 ];
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
@@ -112,6 +126,9 @@ const COPY = {
  "bread.fresh":"火與時間的合謀。","bread.stale":"放久了，硬了。","bread.mold":"綠斑爬上了麵包。","bread.fossil":"連黴菌都放棄了。",
  "wine.fresh":"新釀。青澀，但有潛力。","wine.aged":"時間替它做完了所有的事。","wine.mythic":"封存了三千年的光陰。一滴，足矣。",
  "eternal_sandwich":"三個時代，疊成一口。嚐過的人，不再畏懼時間。",
+ "dragon.proto":"侏儸紀的孑遺。一隻蜷縮的幼小生命。","dragon.young":"溫暖讓牠舒展雙翼。幼龍。",
+ "dragon.elder":"牠成了傳說本身——巨龍。","dragon.fossil":"沒有溫暖，牠終究成了化石。",
+ "dragon_soup":"傳說中的龍肉湯。一勺，便是一個時代的力量。",
 };
 
 /* 歲月之軸節點 */
@@ -163,12 +180,12 @@ function daysToSlider(d){ return d<=0?0:Math.round(SLIDER_MAX*Math.log10(d+1)/Ma
 function formatAge(d){ if(d<=0)return"此刻"; if(d<30)return d+" 天"; if(d<365)return Math.round(d/30)+" 個月"; if(d<36500)return Math.round(d/365)+" 年"; return Math.round(d/365).toLocaleString()+" 年"; }
 
 /* ───────── 存檔 ───────── */
-const SAVE_KEY="chrono.save", SAVE_VERSION=3;
+const SAVE_KEY="chrono.save", SAVE_VERSION=4;
 function defaultSave(){
   return { saveVersion:SAVE_VERSION, kitchenEra:"apocalypse",
     inventory:[{ uid:"i1", id:"milk", formId:"milk.fresh", ageDays:0, bornEra:"apocalypse" }],
     nextUid:2, codex:[], orders:{ active:"o_milk", done:[] },
-    unlocked:{ actions:[], eras:["apocalypse"] }, settings:{ volume:0.8 },
+    unlocked:{ actions:[], eras:["apocalypse"] }, expedition:null, settings:{ volume:0.8 },
     flags:{ ftueDone:false, ftueStep:0 }, stats:{ agings:0, discoveries:0 } };
 }
 function loadSave(){
@@ -215,6 +232,7 @@ function curEra(){ return ERAS[S.kitchenEra]; }
 function renderFolio(){ $("folio").textContent = "殘頁 · "+curEra().name; document.getElementById("app").dataset.era = S.kitchenEra; }
 function renderEraNav(){
   const nav=$("eraNav");
+  if(S.expedition){ nav.hidden=true; return; }   // 遠征中不可翻頁，須先返回
   if(!S.unlocked.actions.includes("era_switch") || S.unlocked.eras.length<2){ nav.hidden=true; return; }
   nav.hidden=false; nav.innerHTML="";
   for(const eid of ERA_ORDER){ if(!S.unlocked.eras.includes(eid)) continue;
@@ -264,12 +282,15 @@ function renderSelected(){
   $("ageBtn").disabled = target<=it.ageDays;
 }
 function renderPantry(){
-  const row=$("pantryRow"); row.innerHTML=""; $("pantryEra").textContent=curEra().name;
-  const commons=curEra().commons;
-  $("pantryEmpty").hidden = commons.length>0;
-  for(const id of commons){ const ing=INGREDIENTS[id]; const el=document.createElement("button");
-    el.className="pantry-item"; el.dataset.tag="fresh";
-    el.innerHTML=`<svg class="artwork" viewBox="0 0 100 100"><use href="#art-${ing.art||ing.forms[ing.base].art}"/></svg><span>${ing.name}</span>`;
+  const row=$("pantryRow"); row.innerHTML="";
+  const onExped = !!S.expedition;
+  const list = onExped ? curEra().rares : curEra().commons;
+  $("pantryEra").textContent = curEra().name + (onExped ? `（稀有 · 剩 ${S.expedition.left}）` : "");
+  $("pantryEmpty").hidden = list.length>0;
+  for(const id of list){ const ing=INGREDIENTS[id]; const el=document.createElement("button");
+    el.className="pantry-item"; el.dataset.tag = onExped ? "rare" : "fresh";
+    if(onExped && S.expedition.left<=0) el.disabled=true;
+    el.innerHTML=`<svg class="artwork" viewBox="0 0 100 100"><use href="#art-${ing.forms[ing.base].art}"/></svg><span>${ing.name}</span>`;
     el.onclick=()=>collect(id); row.appendChild(el); }
 }
 function renderCodex(){
@@ -282,15 +303,16 @@ function renderCodex(){
   $("codexCount").textContent=codex.size; $("codexTotal").textContent=ALL_FORMS.length;
 }
 function renderTicks(){ const t=$("axisTicks"); t.innerHTML=""; for(const n of NODES){ const s=document.createElement("span"); s.textContent=n.label; t.appendChild(s);} }
-function renderAll(){ renderFolio(); renderEraNav(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderCodex(); }
+function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderCodex(); }
 
 /* ───────── 動作 ───────── */
 function collect(id){
-  sfxClick();
   if(S.inventory.length>=20){ toast("調理之頁已滿，先丟棄一些吧。"); return; }
+  if(S.expedition){ if(S.expedition.left<=0){ toast("此地能帶走的，已經足夠了。"); return; } S.expedition.left--; }
+  sfxClick();
   const ing=INGREDIENTS[id]; const it={ uid:newUid(), id, formId:ing.base, ageDays:0, bornEra:S.kitchenEra };
   S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
-  maybeDiscover(ing.base,false); renderInventory(); renderCraft(); renderSelected(); persist();
+  maybeDiscover(ing.base,false); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
 }
 function selectItem(uid){ selectedUid=uid; const it=S.inventory.find(x=>x.uid===uid); $("axis").value=daysToSlider(it?it.ageDays:0); sfxClick(); renderInventory(); renderSelected(); ftueCheck(); }
 function onAxisInput(){
@@ -335,7 +357,42 @@ function maybeDiscover(formId, celebrate){
   if(discovered(formId)){ if(celebrate) sfxSoft(); return; }
   codex.add(formId); S.stats.discoveries++; renderCodex(); persist();
   if(celebrate) showDiscovery(FORMS[formId]); else sfxSoft();
+  const hadExped=S.unlocked.actions.includes("expedition");
+  ensureUnlocks();
+  if(!hadExped && S.unlocked.actions.includes("expedition")){ renderExpedition(); toast("時之爐震動了——你已能『遠征』更古老的紀元。〔遠征已解鎖〕"); }
   checkOrders(); ftueCheck();
+}
+function ensureUnlocks(){
+  if(!S.unlocked.actions.includes("expedition") &&
+     [...codex].some(f=> FORMS[f] && (FORMS[f].tag==="rare"||FORMS[f].tag==="mythic")))
+    S.unlocked.actions.push("expedition");
+}
+/* ───────── 遠征（#1）───────── */
+function startExpedition(dest){
+  if(S.expedition) return;
+  S.expedition={ dest, from:S.kitchenEra, left:EXPED_CAP }; S.kitchenEra=dest; selectedUid=null; sfxFlow(true);
+  const main=$("pageMain"); main.classList.remove("turning"); void main.offsetWidth; main.classList.add("turning");
+  renderAll(); persist();
+}
+function returnExpedition(){
+  if(!S.expedition) return;
+  S.kitchenEra=S.expedition.from; S.expedition=null; selectedUid=null; sfxFlow(false);
+  const main=$("pageMain"); main.classList.remove("turning"); void main.offsetWidth; main.classList.add("turning");
+  renderAll(); persist();
+}
+function renderExpedition(){
+  const banner=$("expedBanner"), sect=$("expedSection");
+  if(S.expedition){
+    banner.hidden=false; sect.hidden=true;
+    $("expedBannerText").textContent="遠征中 · "+ERAS[S.expedition.dest].name+"（稀有採集剩 "+S.expedition.left+"）";
+  }else{
+    banner.hidden=true;
+    if(S.unlocked.actions.includes("expedition")){
+      sect.hidden=false; const row=$("expedRow"); row.innerHTML="";
+      for(const eid of EXPEDITIONS){ const b=document.createElement("button"); b.className="exped-dest";
+        b.innerHTML=`<strong>${ERAS[eid].name}</strong><span>採集稀有食材</span>`; b.onclick=()=>startExpedition(eid); row.appendChild(b); }
+    }else sect.hidden=true;
+  }
 }
 
 /* ───────── 委託 ───────── */
@@ -411,8 +468,10 @@ $("ftueSkip").addEventListener("click", ftueFinish);
 $("axis").addEventListener("input",onAxisInput);
 $("ageBtn").addEventListener("click",doAge);
 $("discardBtn").addEventListener("click",discardSelected);
-const APP_VERSION="0.3.0";                 // 介面版號（每完成一個編號功能就 +1）
+$("expedReturn").addEventListener("click",returnExpedition);
+const APP_VERSION="0.4.0";                 // #1 遠征採集（每完成一個編號功能就 +1）
 $("version").textContent="v"+APP_VERSION;
+ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
 renderTicks(); renderAll(); ftueCheck();
 

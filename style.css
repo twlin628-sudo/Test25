@@ -28,6 +28,15 @@ h1,h2,h3{ margin:0; font-weight:600; }
 #app[data-era="apocalypse"]::after{ background:#8a7a66; opacity:.16; }
 #app[data-era="industrial"]::after{ background:#9fb0bd; opacity:.12; }
 #app[data-era="medieval"]::after{ background:#d9a85c; opacity:.10; }
+#app[data-era="jurassic"]::after{ background:#6f7a3a; opacity:.18; }
+
+/* 遠征 */
+.exped-banner{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px;
+  background:#6f5a2e; color:var(--parchment); font-size:14px; position:relative; z-index:6; }
+.exped-banner button{ background:var(--parchment); color:var(--ink); border:none; border-radius:6px; padding:6px 12px; font-size:13px; }
+.exped-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.exped-dest{ flex:1; min-width:130px; padding:14px; border:1.5px dashed var(--gold); border-radius:8px; background:rgba(184,136,31,.08); text-align:center; color:var(--ink); }
+.exped-dest strong{ display:block; font-size:16px; margin-bottom:2px; } .exped-dest span{ font-size:12px; color:var(--ink-faded); }
 @media(min-width:560px){ #app{ max-width:520px; margin:0 auto; border-left:1px solid var(--burnt); border-right:1px solid var(--burnt); box-shadow:0 0 60px rgba(0,0,0,.6);} }
 
 .topbar{ position:relative; text-align:center; padding:16px 14px 8px; border-bottom:2px solid var(--burnt);

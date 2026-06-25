@@ -93,6 +93,18 @@
     <path d="M24 66h52a4 4 0 0 1-4 7H28a4 4 0 0 1-4-7z" fill="none" stroke="currentColor" stroke-width="2.4"/>
     <path d="M50 18l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="currentColor"/>
   </symbol>
+  <symbol id="art-dragon" viewBox="0 0 100 100">
+    <path d="M28 72c-3-15 8-29 24-31 12-1 22 6 22 16 0 8-6 13-14 13-7 0-11-4-11-9 0-4 3-7 7-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M70 50c7-3 10-9 9-17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M28 72c-5 3-11 2-14-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M50 41l9-7 2 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="64" cy="46" r="1.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="art-dragon_soup" viewBox="0 0 100 100">
+    <path d="M24 54h52a26 20 0 0 1-52 0z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M20 54h60" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M40 44c4-6-2-10 0-16M52 44c4-6-2-10 0-16M64 44c4-6-2-10 0-16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+  </symbol>
 </svg>
 
 <!-- ════════ 應用 ════════ -->
@@ -106,6 +118,11 @@
   </header>
 
   <nav class="eras" id="eraNav" hidden></nav>
+
+  <div class="exped-banner" id="expedBanner" hidden>
+    <span id="expedBannerText"></span>
+    <button id="expedReturn">返回現世</button>
+  </div>
 
   <main class="page" id="pageMain">
 
@@ -142,6 +159,11 @@
       <h2 class="sect-title">採集 · <span id="pantryEra"></span></h2>
       <div class="pantry-row" id="pantryRow"></div>
       <p class="muted" id="pantryEmpty" hidden>此地一片荒蕪，無物可採。</p>
+    </section>
+
+    <section class="exped" id="expedSection" hidden>
+      <h2 class="sect-title">遠征 · 回溯古代</h2>
+      <div class="exped-row" id="expedRow"></div>
     </section>
 
     <section class="codex">
