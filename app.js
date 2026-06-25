@@ -11,11 +11,12 @@ const ERAS = {
   medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],           rares:[] },
   egypt:     { id:"egypt",      name:"古埃及",   envTags:["dry"],   tools:["kiln"],  commons:["wheat","nilefish"],        rares:[] },
   stone:     { id:"stone",      name:"石器時代", envTags:["smoke"], tools:["smoker"],commons:["meat","berry","wildhoney"],rares:[] },
+  future:    { id:"future",     name:"近未來",   envTags:["freeze","warm"], tools:["recombinator"], commons:["synthprotein"], rares:[] },
   // 遠征專屬紀元（不在一般翻頁清單）
   jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                          rares:["dragon","giant_egg","spice"], expedition:true },
 };
-const ERA_ORDER = ["apocalypse","industrial","medieval","egypt","stone"];
-const ERA_UNLOCK = { egypt:0.40, stone:0.55 };   // 以圖鑑完成度解鎖（之後加 future）
+const ERA_ORDER = ["apocalypse","industrial","medieval","egypt","stone","future"];
+const ERA_UNLOCK = { egypt:0.40, stone:0.55, future:0.70 };   // 以圖鑑完成度解鎖
 const EXPEDITIONS = ["jurassic"];   // #1：可遠征的古老紀元
 const EXPED_CAP = 3;                 // 每趟遠征可採集稀有食材的份數
 // #2 悖論
@@ -28,7 +29,7 @@ const ENERGY_MAX = 12;
 const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定 的耗能
 const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
 const LAY_COOLDOWN = 3;                              // #4 母雞產蛋冷卻（以動作計）
-const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯", smoker:"煙燻架" };   // #5 工具顯示名
+const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯", smoker:"煙燻架", recombinator:"分子重組器" };   // #5 工具顯示名
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -120,6 +121,10 @@ const INGREDIENTS = {
   spice:{ id:"spice", name:"史前香料", base:"spice.fresh", forms:{
       "spice.fresh":{name:"史前香料",art:"spice",tag:"rare"}, "spice.fossil":{name:"化石香料",art:"spice",tag:"fossil"} },
     transitions:[ {from:"spice.fresh",at:36500,to:"spice.fossil"} ]},
+  /* 段三 #9 合成蛋白 */
+  synthprotein:{ id:"synthprotein", name:"合成蛋白", base:"synthprotein.fresh", forms:{
+      "synthprotein.fresh":{name:"合成蛋白",art:"synthprotein",tag:"fresh"}, "synthprotein.decayed":{name:"衰變蛋白",art:"synthprotein",tag:"spoiled"} },
+    transitions:[ {from:"synthprotein.fresh",at:365000,to:"synthprotein.decayed"} ]},
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -147,6 +152,10 @@ const RECIPES = [
     inputs:[ {match:{formId:"wheat.fresh"}, count:1} ] },
   { id:"candied_berry", name:"蜜餞野果", tool:null, era:null, output:"candy", hidden:true,
     inputs:[ {match:{formId:"berry.fresh"}, count:1}, {match:{formId:"wildhoney.fresh"}, count:1} ] },
+  { id:"synth_meat", name:"重組鮮肉", tool:"recombinator", era:"future", output:"meat",
+    inputs:[ {match:{formId:"synthprotein.fresh"}, count:1} ] },
+  { id:"synth_dragon", name:"重組龍胚", tool:"recombinator", era:"future", output:"dragon", hidden:true,
+    inputs:[ {match:{formId:"synthprotein.fresh"}, count:1}, {match:{formId:"spice.fresh"}, count:1} ] },
 ];
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
@@ -195,6 +204,7 @@ const COPY = {
  "candy":"野果裹上野蜜——史前的甜點。",
  "giant_egg.fresh":"比人頭還大的蛋。裡頭睡著什麼？","giant_egg.dragon":"溫暖喚醒了牠——破殼而出的巨龍。",
  "spice.fresh":"史前的香料，氣味濃烈得不像這個世界。","spice.fossil":"連香氣都成了化石。",
+ "synthprotein.fresh":"近未來的合成蛋白。無味，卻是萬物的基料。","synthprotein.decayed":"連合成物也會在漫長歲月裡崩解。",
 };
 
 /* 歲月之軸節點 */
@@ -633,7 +643,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.9.0";                 // 段二：#7 石器時代 + #11 野蜂蜜 + #8 補完侏儸紀
+const APP_VERSION="0.10.0";                // 段三：#9 近未來 + 分子重組器 + 合成蛋白
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
