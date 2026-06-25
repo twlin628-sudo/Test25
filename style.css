@@ -37,6 +37,21 @@ h1,h2,h3{ margin:0; font-weight:600; }
 .exped-row{ display:flex; gap:10px; flex-wrap:wrap; }
 .exped-dest{ flex:1; min-width:130px; padding:14px; border:1.5px dashed var(--gold); border-radius:8px; background:rgba(184,136,31,.08); text-align:center; color:var(--ink); }
 .exped-dest strong{ display:block; font-size:16px; margin-bottom:2px; } .exped-dest span{ font-size:12px; color:var(--ink-faded); }
+
+/* 悖論 */
+.paradox{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 14px; position:relative; z-index:6;
+  font-size:13px; color:var(--ink); letter-spacing:.08em; border-bottom:1px dashed var(--ink-faded);
+  background:linear-gradient(180deg, rgba(150,40,110,.10), transparent); }
+.paradox button{ background:var(--ink); color:var(--parchment); border:none; border-radius:6px; padding:5px 12px; font-size:12px; }
+.paradox .status-energy{ color:var(--gold); font-weight:600; }
+.paradox .paradox-label{ color:var(--vermilion); }
+.paradox-fx{ position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0; transition:opacity .6s ease;
+  background:radial-gradient(120% 100% at 50% 50%, transparent 38%, rgba(150,40,110,.45)); }
+.paradox-fx[data-lvl="lvl1"]{ opacity:.45; animation:paradoxPulse 3s ease-in-out infinite; }
+.paradox-fx[data-lvl="lvl2"]{ opacity:.8; animation:paradoxPulse 1.3s ease-in-out infinite; }
+@keyframes paradoxPulse{ 50%{ filter:hue-rotate(35deg); } }
+#app[data-paradox="lvl2"] .page{ animation:paradoxShake .4s ease-in-out infinite; }
+@keyframes paradoxShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-1.5px);} 75%{ transform:translateX(1.5px);} }
 @media(min-width:560px){ #app{ max-width:520px; margin:0 auto; border-left:1px solid var(--burnt); border-right:1px solid var(--burnt); box-shadow:0 0 60px rgba(0,0,0,.6);} }
 
 .topbar{ position:relative; text-align:center; padding:16px 14px 8px; border-bottom:2px solid var(--burnt);

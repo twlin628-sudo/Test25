@@ -105,6 +105,10 @@
     <path d="M20 54h60" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
     <path d="M40 44c4-6-2-10 0-16M52 44c4-6-2-10 0-16M64 44c4-6-2-10 0-16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
   </symbol>
+  <symbol id="art-residue" viewBox="0 0 100 100">
+    <path d="M30 62c-5-13 4-26 19-28 14-2 25 8 23 20-1 7-9 9-13 5-3-3-1-9-6-9-4 0-5 5-9 5-5 0-7-6-11-4-3 2-2 7 1 10 5 4 14 4 14 11 0 5-7 8-13 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+    <circle cx="45" cy="50" r="1.7" fill="currentColor"/><circle cx="57" cy="50" r="1.7" fill="currentColor"/>
+  </symbol>
 </svg>
 
 <!-- ════════ 應用 ════════ -->
@@ -122,6 +126,12 @@
   <div class="exped-banner" id="expedBanner" hidden>
     <span id="expedBannerText"></span>
     <button id="expedReturn">返回現世</button>
+  </div>
+
+  <div class="paradox" id="paradoxBar" hidden>
+    <span class="status-energy" id="energyText" hidden></span>
+    <span class="paradox-label" id="paradoxText" hidden></span>
+    <button id="stabilizeBtn" hidden>穩定時間線</button>
   </div>
 
   <main class="page" id="pageMain">
@@ -151,6 +161,7 @@
       <div class="axis-ticks" id="axisTicks"></div>
       <div class="sel-actions">
         <button class="age-btn" id="ageBtn" disabled>熟成 — 讓歲月經過</button>
+        <button class="ghost" id="dupBtn" hidden>複製</button>
         <button class="ghost" id="discardBtn">丟棄</button>
       </div>
     </section>
@@ -184,6 +195,9 @@
     <div class="discovery-stamp">補上了一頁</div>
   </div>
 </div>
+
+<!-- 悖論視覺特效層 -->
+<div class="paradox-fx" id="paradoxFx" data-lvl="lvl0" aria-hidden="true"></div>
 
 <!-- 委託完成提示 -->
 <div class="toast" id="toast" hidden></div>

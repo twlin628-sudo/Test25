@@ -15,6 +15,15 @@ const ERAS = {
 const ERA_ORDER = ["apocalypse","industrial","medieval"];
 const EXPEDITIONS = ["jurassic"];   // #1：可遠征的古老紀元
 const EXPED_CAP = 3;                 // 每趟遠征可採集稀有食材的份數
+// #2 悖論
+const PARADOX_PER_DUP = 25;   // 每次複製累積
+const PARADOX_COOL = 5;       // 正常遊玩（熟成/採集/加工）自然冷卻
+const PARADOX_CORRUPT = 80;   // 達此值，複製會吐出「時間殘影」
+const PARADOX_MAX = 120;
+// #3 時光能量
+const ENERGY_MAX = 12;
+const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定 的耗能
+const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -68,6 +77,9 @@ const INGREDIENTS = {
       {from:"dragon.young",at:365,to:"dragon.elder"} ]},
   dsoup:{ id:"dsoup", name:"龍肉湯", base:"dragon_soup", forms:{
       "dragon_soup":{name:"龍肉湯",art:"dragon_soup",tag:"mythic"} }, transitions:[] },
+  /* #2 複製過載的副產物 */
+  residue:{ id:"residue", name:"時間殘影", base:"residue", forms:{
+      "residue":{name:"時間殘影",art:"residue",tag:"spoiled"} }, transitions:[] },
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -129,6 +141,7 @@ const COPY = {
  "dragon.proto":"侏儸紀的孑遺。一隻蜷縮的幼小生命。","dragon.young":"溫暖讓牠舒展雙翼。幼龍。",
  "dragon.elder":"牠成了傳說本身——巨龍。","dragon.fossil":"沒有溫暖，牠終究成了化石。",
  "dragon_soup":"傳說中的龍肉湯。一勺，便是一個時代的力量。",
+ "residue":"複製過了頭，時間吐出的殘渣。它什麼也不是。",
 };
 
 /* 歲月之軸節點 */
@@ -180,13 +193,13 @@ function daysToSlider(d){ return d<=0?0:Math.round(SLIDER_MAX*Math.log10(d+1)/Ma
 function formatAge(d){ if(d<=0)return"此刻"; if(d<30)return d+" 天"; if(d<365)return Math.round(d/30)+" 個月"; if(d<36500)return Math.round(d/365)+" 年"; return Math.round(d/365).toLocaleString()+" 年"; }
 
 /* ───────── 存檔 ───────── */
-const SAVE_KEY="chrono.save", SAVE_VERSION=4;
+const SAVE_KEY="chrono.save", SAVE_VERSION=6;
 function defaultSave(){
   return { saveVersion:SAVE_VERSION, kitchenEra:"apocalypse",
     inventory:[{ uid:"i1", id:"milk", formId:"milk.fresh", ageDays:0, bornEra:"apocalypse" }],
     nextUid:2, codex:[], orders:{ active:"o_milk", done:[] },
-    unlocked:{ actions:[], eras:["apocalypse"] }, expedition:null, settings:{ volume:0.8 },
-    flags:{ ftueDone:false, ftueStep:0 }, stats:{ agings:0, discoveries:0 } };
+    unlocked:{ actions:[], eras:["apocalypse"] }, expedition:null, paradox:0, energy:ENERGY_MAX, settings:{ volume:0.8 },
+    flags:{ ftueDone:false, ftueStep:0 }, stats:{ agings:0, discoveries:0, paradoxPeak:0 } };
 }
 function loadSave(){
   try{ const raw=localStorage.getItem(SAVE_KEY); if(!raw) return defaultSave();
@@ -220,7 +233,8 @@ function noiseSweep(dur,peak){ if(!actx||vol()<=0)return; const t=actx.currentTi
   const g=actx.createGain();g.gain.value=peak*vol(); src.connect(f).connect(g).connect(actx.destination); src.start(); }
 const sfxClick=()=>tone("triangle",420,260,.06,.25), sfxFlow=b=>noiseSweep(b?1.2:.6,.25),
   sfxStamp=()=>{tone("triangle",200,90,.18,.6);tone("sine",880,560,.25,.18);}, sfxSoft=()=>tone("sine",240,200,.14,.12),
-  sfxMake=()=>{tone("sine",330,440,.18,.2);tone("sine",440,660,.22,.18);};
+  sfxMake=()=>{tone("sine",330,440,.18,.2);tone("sine",440,660,.22,.18);},
+  sfxWarp=()=>{tone("sawtooth",200,120,.3,.16);tone("sawtooth",212,128,.3,.1);};
 
 /* ───────── DOM ───────── */
 const $=id=>document.getElementById(id);
@@ -280,6 +294,8 @@ function renderSelected(){
   $("selAge").textContent=formatAge(target)+(target>it.ageDays?"（預覽）":"");
   $("axisReadout").textContent=formatAge(target);
   $("ageBtn").disabled = target<=it.ageDays;
+  $("dupBtn").hidden = !S.unlocked.actions.includes("duplication");
+  if(!$("dupBtn").hidden) $("dupBtn").textContent = "複製（耗能"+COST_DUP+"）";
 }
 function renderPantry(){
   const row=$("pantryRow"); row.innerHTML="";
@@ -303,7 +319,7 @@ function renderCodex(){
   $("codexCount").textContent=codex.size; $("codexTotal").textContent=ALL_FORMS.length;
 }
 function renderTicks(){ const t=$("axisTicks"); t.innerHTML=""; for(const n of NODES){ const s=document.createElement("span"); s.textContent=n.label; t.appendChild(s);} }
-function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderCodex(); }
+function renderAll(){ renderFolio(); renderEraNav(); renderExpedition(); renderParadox(); renderOrder(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderCodex(); }
 
 /* ───────── 動作 ───────── */
 function collect(id){
@@ -312,7 +328,7 @@ function collect(id){
   sfxClick();
   const ing=INGREDIENTS[id]; const it={ uid:newUid(), id, formId:ing.base, ageDays:0, bornEra:S.kitchenEra };
   S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
-  maybeDiscover(ing.base,false); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
+  maybeDiscover(ing.base,false); coolParadox(); renderInventory(); renderCraft(); renderSelected(); renderPantry(); renderExpedition(); persist();
 }
 function selectItem(uid){ selectedUid=uid; const it=S.inventory.find(x=>x.uid===uid); $("axis").value=daysToSlider(it?it.ageDays:0); sfxClick(); renderInventory(); renderSelected(); ftueCheck(); }
 function onAxisInput(){
@@ -330,7 +346,7 @@ function doAge(){
   sfxFlow(target-it.ageDays>3650);
   it.ageDays=target; it.formId=resolveForm(it, S.kitchenEra); S.stats.agings++;
   const main=$("pageMain"); main.classList.remove("flash"); void main.offsetWidth;
-  maybeDiscover(it.formId,true);
+  maybeDiscover(it.formId,true); gainEnergy(REGEN_AGE); coolParadox();
   renderInventory(); renderCraft(); renderSelected(); persist();
 }
 function makeRecipe(m){
@@ -339,7 +355,7 @@ function makeRecipe(m){
   const out=INGREDIENTS[r.output]; const it={ uid:newUid(), id:r.output, formId:out.base, ageDays:0, bornEra:S.kitchenEra };
   S.inventory.push(it); selectedUid=it.uid; $("axis").value=0;
   sfxMake();
-  maybeDiscover(out.base,true);
+  maybeDiscover(out.base,true); coolParadox();
   renderInventory(); renderCraft(); renderSelected(); persist();
 }
 function discardSelected(){
@@ -355,21 +371,64 @@ function switchEra(eid){
 }
 function maybeDiscover(formId, celebrate){
   if(discovered(formId)){ if(celebrate) sfxSoft(); return; }
-  codex.add(formId); S.stats.discoveries++; renderCodex(); persist();
+  codex.add(formId); S.stats.discoveries++; gainEnergy(REGEN_DISCOVER); renderCodex(); persist();
   if(celebrate) showDiscovery(FORMS[formId]); else sfxSoft();
-  const hadExped=S.unlocked.actions.includes("expedition");
+  const hadExped=S.unlocked.actions.includes("expedition"), hadDup=S.unlocked.actions.includes("duplication");
   ensureUnlocks();
   if(!hadExped && S.unlocked.actions.includes("expedition")){ renderExpedition(); toast("時之爐震動了——你已能『遠征』更古老的紀元。〔遠征已解鎖〕"); }
+  if(!hadDup && S.unlocked.actions.includes("duplication")){ renderParadox(); renderSelected(); toast("你窺見了時間的裂縫——『複製』已解鎖。但小心悖論。"); }
   checkOrders(); ftueCheck();
 }
 function ensureUnlocks(){
-  if(!S.unlocked.actions.includes("expedition") &&
-     [...codex].some(f=> FORMS[f] && (FORMS[f].tag==="rare"||FORMS[f].tag==="mythic")))
-    S.unlocked.actions.push("expedition");
+  const hasTag=t=> [...codex].some(f=> FORMS[f] && FORMS[f].tag===t);
+  if(!S.unlocked.actions.includes("expedition") && (hasTag("rare")||hasTag("mythic"))) S.unlocked.actions.push("expedition");
+  if(!S.unlocked.actions.includes("duplication") && hasTag("mythic")) S.unlocked.actions.push("duplication");
+}
+/* ───────── 複製 + 悖論（#2）───────── */
+function paradoxLvl(){ return S.paradox>=80?"lvl2":(S.paradox>=40?"lvl1":"lvl0"); }
+function coolParadox(){ S.paradox=Math.max(0,S.paradox-PARADOX_COOL); renderParadox(); }
+/* #3 能量 */
+function energyActive(){ return S.unlocked.actions.includes("expedition")||S.unlocked.actions.includes("duplication"); }
+function gainEnergy(n){ if(!energyActive()) return; S.energy=Math.min(ENERGY_MAX,(S.energy??ENERGY_MAX)+n); }
+function spendEnergy(n){ if((S.energy??ENERGY_MAX)<n) return false; S.energy-=n; return true; }
+function duplicate(){
+  if(!S.unlocked.actions.includes("duplication")) return;
+  const it=S.inventory.find(x=>x.uid===selectedUid); if(!it) return;
+  if(S.inventory.length>=20){ toast("調理之頁已滿，先丟棄一些吧。"); return; }
+  if(!spendEnergy(COST_DUP)){ toast("時光能量不足，無法複製。"); return; }
+  const corrupt = S.paradox >= PARADOX_CORRUPT;
+  const copy = corrupt ? { uid:newUid(), id:"residue", formId:"residue", ageDays:0, bornEra:S.kitchenEra }
+                       : { ...it, uid:newUid() };
+  S.inventory.push(copy);
+  S.paradox = Math.min(PARADOX_MAX, S.paradox + PARADOX_PER_DUP);
+  S.stats.paradoxPeak = Math.max(S.stats.paradoxPeak||0, S.paradox);
+  selectedUid=copy.uid; $("axis").value=daysToSlider(copy.ageDays); sfxWarp();
+  maybeDiscover(copy.formId,false);
+  renderInventory(); renderCraft(); renderSelected(); renderParadox(); persist();
+  if(corrupt) toast("時間扭曲了——複製出的，是一團殘影。");
+}
+function stabilize(){ if(S.paradox<=0) return; if(!spendEnergy(COST_STAB)){ toast("時光能量不足，無法穩定。"); return; } S.paradox=0; renderParadox(); renderSelected(); sfxSoft(); toast("時間線已撫平。"); persist(); }
+function renderParadox(){   // 狀態列：時光能量 + 時空悖論
+  const eShow = energyActive();
+  const pShow = S.unlocked.actions.includes("duplication") || S.paradox>0;
+  $("paradoxBar").hidden = !(eShow || pShow);
+  // 能量
+  $("energyText").hidden = !eShow;
+  if(eShow) $("energyText").textContent = "時光能量 "+(S.energy??ENERGY_MAX)+"/"+ENERGY_MAX;
+  // 悖論
+  const lvl=paradoxLvl();
+  document.getElementById("app").dataset.paradox=lvl; $("paradoxFx").dataset.lvl=lvl;
+  $("paradoxText").hidden = !pShow;
+  if(pShow){ const b=Math.max(0,Math.min(6,Math.round(S.paradox/20)));
+    $("paradoxText").textContent="時空悖論 "+"▮".repeat(b)+"▯".repeat(6-b)+(S.paradox>=PARADOX_CORRUPT?"　瀕臨崩壞":""); }
+  const stab = pShow && S.paradox>0;
+  $("stabilizeBtn").hidden = !stab;
+  if(stab) $("stabilizeBtn").textContent = "穩定時間線（耗能"+COST_STAB+"）";
 }
 /* ───────── 遠征（#1）───────── */
 function startExpedition(dest){
   if(S.expedition) return;
+  if(!spendEnergy(COST_EXPED)){ toast("時光能量不足，無法遠征。讓歲月流過或有所發現以回氣。"); return; }
   S.expedition={ dest, from:S.kitchenEra, left:EXPED_CAP }; S.kitchenEra=dest; selectedUid=null; sfxFlow(true);
   const main=$("pageMain"); main.classList.remove("turning"); void main.offsetWidth; main.classList.add("turning");
   renderAll(); persist();
@@ -390,7 +449,7 @@ function renderExpedition(){
     if(S.unlocked.actions.includes("expedition")){
       sect.hidden=false; const row=$("expedRow"); row.innerHTML="";
       for(const eid of EXPEDITIONS){ const b=document.createElement("button"); b.className="exped-dest";
-        b.innerHTML=`<strong>${ERAS[eid].name}</strong><span>採集稀有食材</span>`; b.onclick=()=>startExpedition(eid); row.appendChild(b); }
+        b.innerHTML=`<strong>${ERAS[eid].name}</strong><span>採集稀有食材 · 耗能 ${COST_EXPED}</span>`; b.onclick=()=>startExpedition(eid); row.appendChild(b); }
     }else sect.hidden=true;
   }
 }
@@ -399,8 +458,8 @@ function renderExpedition(){
 function checkOrders(){
   const id=S.orders.active; if(!id) return;
   const o=ORDERS[id]; if(!o.goal()) return;
-  S.orders.done.push(id); S.orders.active = o.next; o.reward();
-  renderEraNav(); renderOrder(); renderPantry(); persist();
+  S.orders.done.push(id); S.orders.active = o.next; o.reward(); gainEnergy(REGEN_ORDER);
+  renderEraNav(); renderOrder(); renderPantry(); renderParadox(); persist();
   if(o.done==="__ENDING__") showEnding(); else toast("「"+o.name+"」— "+o.done);
 }
 
@@ -469,7 +528,9 @@ $("axis").addEventListener("input",onAxisInput);
 $("ageBtn").addEventListener("click",doAge);
 $("discardBtn").addEventListener("click",discardSelected);
 $("expedReturn").addEventListener("click",returnExpedition);
-const APP_VERSION="0.4.0";                 // #1 遠征採集（每完成一個編號功能就 +1）
+$("dupBtn").addEventListener("click",duplicate);
+$("stabilizeBtn").addEventListener("click",stabilize);
+const APP_VERSION="0.6.0";                 // #3 時光能量（每完成一個編號功能就 +1）
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
