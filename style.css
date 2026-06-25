@@ -29,6 +29,7 @@ h1,h2,h3{ margin:0; font-weight:600; }
 #app[data-era="industrial"]::after{ background:#9fb0bd; opacity:.12; }
 #app[data-era="medieval"]::after{ background:#d9a85c; opacity:.10; }
 #app[data-era="jurassic"]::after{ background:#6f7a3a; opacity:.18; }
+#app[data-era="egypt"]::after{ background:#d8b25a; opacity:.16; }
 
 /* 遠征 */
 .exped-banner{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px;

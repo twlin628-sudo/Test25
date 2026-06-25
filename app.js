@@ -6,13 +6,15 @@
 
 /* ───────── 紀元 ───────── */
 const ERAS = {
-  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:[],                    rares:[] },
-  industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg"],rares:[] },
-  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],     rares:[] },
+  apocalypse:{ id:"apocalypse", name:"文明終末", envTags:[],        tools:[],        commons:[],                          rares:[] },
+  industrial:{ id:"industrial", name:"工業時代", envTags:["freeze"],tools:["oven"],  commons:["milk","dough","egg","meat"],rares:[] },
+  medieval:  { id:"medieval",   name:"中世紀",   envTags:["warm"],  tools:["barrel"],commons:["grape","honey"],           rares:[] },
+  egypt:     { id:"egypt",      name:"古埃及",   envTags:["dry"],   tools:["kiln"],  commons:["wheat","nilefish"],        rares:[] },
   // 遠征專屬紀元（不在一般翻頁清單）
-  jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                    rares:["dragon"], expedition:true },
+  jurassic:  { id:"jurassic",   name:"侏儸紀",   envTags:["warm"],  tools:[],        commons:[],                          rares:["dragon"], expedition:true },
 };
-const ERA_ORDER = ["apocalypse","industrial","medieval"];
+const ERA_ORDER = ["apocalypse","industrial","medieval","egypt"];
+const ERA_UNLOCK = { egypt:0.40 };   // 以圖鑑完成度解鎖（之後加 stone/future）
 const EXPEDITIONS = ["jurassic"];   // #1：可遠征的古老紀元
 const EXPED_CAP = 3;                 // 每趟遠征可採集稀有食材的份數
 // #2 悖論
@@ -25,7 +27,7 @@ const ENERGY_MAX = 12;
 const COST_EXPED = 4, COST_DUP = 3, COST_STAB = 2;   // 遠征 / 複製 / 穩定 的耗能
 const REGEN_AGE = 1, REGEN_DISCOVER = 2, REGEN_ORDER = 5; // 熟成 / 發現 / 委託 的回氣
 const LAY_COOLDOWN = 3;                              // #4 母雞產蛋冷卻（以動作計）
-const TOOL_NAMES = { oven:"烤箱", barrel:"木桶" };   // #5 工具顯示名
+const TOOL_NAMES = { oven:"烤箱", barrel:"木桶", kiln:"陶窯" };   // #5 工具顯示名
 
 /* ───────── 食材（forms + transitions；對齊內容聖經 §2/§3）─────────
    transition: { from, at(絕對年齡天), to, requiresEnv? }
@@ -82,6 +84,23 @@ const INGREDIENTS = {
   /* #2 複製過載的副產物 */
   residue:{ id:"residue", name:"時間殘影", base:"residue", forms:{
       "residue":{name:"時間殘影",art:"residue",tag:"spoiled"} }, transitions:[] },
+  /* #10 肉類（需 dry 或 smoke 環境）*/
+  meat:{ id:"meat", name:"肉", base:"meat.fresh", forms:{
+      "meat.fresh":{name:"鮮肉",art:"meat",tag:"fresh"}, "meat.dried":{name:"乾肉",art:"dried_meat",tag:"normal"},
+      "meat.mummy":{name:"木乃伊肉",art:"mummy_meat",tag:"rare"}, "meat.fossil":{name:"化石肉",art:"mummy_meat",tag:"fossil"},
+      "meat.rotten":{name:"腐肉",art:"meat",tag:"spoiled"} },
+    transitions:[ {from:"meat.fresh",at:3,to:"meat.dried",requiresEnv:"dry"}, {from:"meat.fresh",at:3,to:"meat.dried",requiresEnv:"smoke"},
+      {from:"meat.fresh",at:3,to:"meat.rotten"}, {from:"meat.dried",at:365,to:"meat.mummy"}, {from:"meat.mummy",at:36500,to:"meat.fossil"} ]},
+  /* #11 古代小麥 */
+  wheat:{ id:"wheat", name:"古代小麥", base:"wheat.fresh", forms:{
+      "wheat.fresh":{name:"古代小麥",art:"wheat",tag:"fresh"}, "wheat.dust":{name:"塵",art:"dust",tag:"fossil"} },
+    transitions:[ {from:"wheat.fresh",at:36500,to:"wheat.dust"} ]},
+  /* #11 尼羅魚 */
+  nilefish:{ id:"nilefish", name:"尼羅魚", base:"nilefish.fresh", forms:{
+      "nilefish.fresh":{name:"尼羅魚",art:"nilefish",tag:"fresh"}, "nilefish.dried":{name:"魚乾",art:"dried_fish",tag:"normal"},
+      "nilefish.aged":{name:"陳年鹹魚",art:"dried_fish",tag:"rare"}, "nilefish.rotten":{name:"腐魚",art:"nilefish",tag:"spoiled"} },
+    transitions:[ {from:"nilefish.fresh",at:3,to:"nilefish.dried",requiresEnv:"dry"}, {from:"nilefish.fresh",at:3,to:"nilefish.dried",requiresEnv:"smoke"},
+      {from:"nilefish.fresh",at:5,to:"nilefish.rotten"}, {from:"nilefish.dried",at:365,to:"nilefish.aged"} ]},
 };
 
 /* formId → 形態定義（含所屬 ingredient） */
@@ -105,6 +124,8 @@ const RECIPES = [
              {match:{formId:"honey.ancient"}, count:1} ] },
   { id:"dragon_soup", name:"龍肉湯", tool:null, era:null, output:"dsoup", hidden:true,
     inputs:[ {match:{formId:"dragon.elder"}, count:1} ] },
+  { id:"ancient_bread", name:"古法麵包", tool:"kiln", era:"egypt", output:"bread",
+    inputs:[ {match:{formId:"wheat.fresh"}, count:1} ] },
 ];
 
 /* ───────── 委託（敘事文案 §3 + 進程地圖）───────── */
@@ -144,6 +165,10 @@ const COPY = {
  "dragon.elder":"牠成了傳說本身——巨龍。","dragon.fossil":"沒有溫暖，牠終究成了化石。",
  "dragon_soup":"傳說中的龍肉湯。一勺，便是一個時代的力量。",
  "residue":"複製過了頭，時間吐出的殘渣。它什麼也不是。",
+ "meat.fresh":"一塊鮮肉。要在乾燥或煙燻之地才存得住。","meat.dried":"水分抽乾，於是它能撐過歲月。乾肉。",
+ "meat.mummy":"乾到極致，宛如法老的隨葬。","meat.fossil":"連時間都嚼不動了。","meat.rotten":"沒有乾燥，肉很快就壞了。",
+ "wheat.fresh":"古代的麥子。文明的主食，自此而生。","wheat.dust":"麥子也終歸塵土。",
+ "nilefish.fresh":"尼羅河的恩賜。","nilefish.dried":"日曬成乾，鹹香撲鼻。魚乾。","nilefish.aged":"陳年鹹魚，越陳越鮮。","nilefish.rotten":"離了水又沒晾乾，魚就臭了。",
 };
 
 /* 歲月之軸節點 */
@@ -386,16 +411,20 @@ function maybeDiscover(formId, celebrate){
   if(discovered(formId)){ if(celebrate) sfxSoft(); return; }
   codex.add(formId); S.stats.discoveries++; gainEnergy(REGEN_DISCOVER); renderCodex(); persist();
   if(celebrate) showDiscovery(FORMS[formId]); else sfxSoft();
-  const hadExped=S.unlocked.actions.includes("expedition"), hadDup=S.unlocked.actions.includes("duplication");
+  const hadExped=S.unlocked.actions.includes("expedition"), hadDup=S.unlocked.actions.includes("duplication"), eras0=[...S.unlocked.eras];
   ensureUnlocks();
   if(!hadExped && S.unlocked.actions.includes("expedition")){ renderExpedition(); toast("時之爐震動了——你已能『遠征』更古老的紀元。〔遠征已解鎖〕"); }
   if(!hadDup && S.unlocked.actions.includes("duplication")){ renderParadox(); renderSelected(); toast("你窺見了時間的裂縫——『複製』已解鎖。但小心悖論。"); }
+  for(const e of S.unlocked.eras) if(!eras0.includes(e)){ renderEraNav(); toast("書頁間浮現了新的紀元——「"+ERAS[e].name+"」已可翻閱。"); }
   checkOrders(); ftueCheck();
 }
 function ensureUnlocks(){
   const hasTag=t=> [...codex].some(f=> FORMS[f] && FORMS[f].tag===t);
   if(!S.unlocked.actions.includes("expedition") && (hasTag("rare")||hasTag("mythic"))) S.unlocked.actions.push("expedition");
   if(!S.unlocked.actions.includes("duplication") && hasTag("mythic")) S.unlocked.actions.push("duplication");
+  const pct = codex.size / ALL_FORMS.length;
+  for(const [eid,th] of Object.entries(ERA_UNLOCK))
+    if(pct>=th && !S.unlocked.eras.includes(eid)) S.unlocked.eras.push(eid);
 }
 /* ───────── 複製 + 悖論（#2）───────── */
 function paradoxLvl(){ return S.paradox>=80?"lvl2":(S.paradox>=40?"lvl1":"lvl0"); }
@@ -578,7 +607,7 @@ $("expedReturn").addEventListener("click",returnExpedition);
 $("dupBtn").addEventListener("click",duplicate);
 $("stabilizeBtn").addEventListener("click",stabilize);
 $("layBtn").addEventListener("click",layEgg);
-const APP_VERSION="0.7.0";                 // #4 生命循環 + #5 工具老化
+const APP_VERSION="0.8.0";                 // 段一：#6 古埃及 + #10 肉類 + #11 古代小麥/尼羅魚
 $("version").textContent="v"+APP_VERSION;
 ensureUnlocks();                           // 既有存檔若已發現稀有，補上遠征解鎖
 selectedUid = (S.flags.ftueDone && S.inventory[0]) ? S.inventory[0].uid : null;  // FTUE 首次不自動選取，引導玩家自己點
